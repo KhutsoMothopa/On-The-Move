@@ -960,6 +960,7 @@ button {
 }
 
 .quote-note,
+.estimate-actions,
 .request-result,
 .operator-tip {
   padding: 18px;
@@ -970,19 +971,39 @@ button {
   background: rgba(10, 126, 119, 0.08);
 }
 
+.estimate-actions {
+  background: linear-gradient(135deg, rgba(234, 107, 45, 0.08), rgba(255, 255, 255, 0.9));
+  border: 1px solid rgba(234, 107, 45, 0.14);
+}
+
 .request-result {
   background: rgba(234, 107, 45, 0.1);
+}
+
+.request-result[data-tone="success"] {
+  background: rgba(10, 126, 119, 0.12);
+}
+
+.request-result[data-tone="warning"] {
+  background: rgba(234, 107, 45, 0.12);
+}
+
+.request-result[data-tone="neutral"] {
+  background: rgba(24, 35, 31, 0.06);
 }
 
 .operator-tip {
   background: rgba(24, 35, 31, 0.04);
 }
 
+.estimate-actions h4,
+.estimate-actions p,
 .request-result h4,
 .request-result p {
   margin: 0;
 }
 
+.estimate-actions p,
 .request-result p {
   margin-top: 10px;
   line-height: 1.6;

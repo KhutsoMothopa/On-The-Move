@@ -91,6 +91,10 @@ const GEOAPIFY_ENDPOINTS = {
   route: "/api/geoapify-route",
 };
 
+const NOTIFICATION_ENDPOINTS = {
+  requestEmail: "/api/send-request-notification",
+};
+
 const AUTOCOMPLETE_MIN_CHARS = 3;
 
 const ui = {
@@ -99,8 +103,15 @@ const ui = {
   operatorEmailInput: document.querySelector("#operator-email"),
   requestSubmitButton: document.querySelector("#request-submit"),
   driverFeedback: document.querySelector("#driver-feedback"),
+  estimateActions: document.querySelector("#estimate-actions"),
+  estimateActionsTitle: document.querySelector("#estimate-actions-title"),
+  estimateActionsCopy: document.querySelector("#estimate-actions-copy"),
+  confirmRequestButton: document.querySelector("#confirm-request"),
+  cancelRequestButton: document.querySelector("#cancel-request"),
   requestResult: document.querySelector("#request-result"),
+  requestResultTitle: document.querySelector("#request-result-title"),
   requestResultCopy: document.querySelector("#request-result-copy"),
+  requestResultActions: document.querySelector("#request-result-actions"),
   emailLink: document.querySelector("#email-link"),
   copySummaryButton: document.querySelector("#copy-summary"),
   quote: {
@@ -145,6 +156,8 @@ const ui = {
 
 let lastSummary = "";
 let geoapifyAutocompleteEnabled = true;
+let pendingRequestDraft = null;
+let requestConfirmationInFlight = false;
 
 init();
 
@@ -158,6 +171,8 @@ function init() {
 
   if (ui.requestForm) {
     ui.requestForm.addEventListener("submit", handleRequestSubmit);
+    ui.requestForm.addEventListener("input", handleRequestFormMutation);
+    ui.requestForm.addEventListener("change", handleRequestFormMutation);
     if (ui.requestForm.elements.moveDate) {
       ui.requestForm.elements.moveDate.value = todayIsoDate();
       ui.requestForm.elements.moveDate.min = todayIsoDate();
@@ -174,6 +189,14 @@ function init() {
     ui.copySummaryButton.addEventListener("click", copyLastSummary);
   }
 
+  if (ui.confirmRequestButton) {
+    ui.confirmRequestButton.addEventListener("click", handleConfirmRequest);
+  }
+
+  if (ui.cancelRequestButton) {
+    ui.cancelRequestButton.addEventListener("click", handleCancelRequest);
+  }
+
   renderDashboard();
 }
 
@@ -187,8 +210,39 @@ function handleOperatorEmailInput() {
 async function handleRequestSubmit(event) {
   event.preventDefault();
 
+  const payload = getRequestPayloadFromForm();
+
+  setRequestLoadingState(true);
+
+  try {
+    const route = await resolveDistance(payload);
+    const estimate = calculateEstimate(payload, route);
+    const drivers = loadStorage(STORAGE_KEYS.drivers, []);
+    const suggestedDriver = findClosestDriver(drivers, payload, route);
+
+    renderQuote(estimate, route, payload, suggestedDriver);
+    pendingRequestDraft = {
+      payload,
+      route,
+      estimate,
+      suggestedDriver,
+    };
+    lastSummary = "";
+    showEstimateActions(estimate, suggestedDriver);
+    hideRequestStatus();
+  } catch (error) {
+    pendingRequestDraft = null;
+    hideEstimateActions();
+    renderErrorQuote(error.message);
+  } finally {
+    setRequestLoadingState(false);
+  }
+}
+
+function getRequestPayloadFromForm() {
   const formData = new FormData(ui.requestForm);
-  const payload = {
+
+  return {
     customerName: formData.get("customerName").trim(),
     customerPhone: formData.get("customerPhone").trim(),
     customerEmail: formData.get("customerEmail").trim(),
@@ -205,60 +259,6 @@ async function handleRequestSubmit(event) {
     loadDensity: formData.get("loadDensity"),
     notes: formData.get("notes").trim(),
   };
-
-  setRequestLoadingState(true);
-
-  try {
-    const route = await resolveDistance(payload);
-    const estimate = calculateEstimate(payload, route);
-    const drivers = loadStorage(STORAGE_KEYS.drivers, []);
-    const suggestedDriver = findClosestDriver(drivers, payload, route);
-
-    renderQuote(estimate, route, payload, suggestedDriver);
-
-    const requestRecord = {
-      id: createId("request"),
-      createdAt: new Date().toISOString(),
-      ...payload,
-      route,
-      estimate,
-      suggestedDriverId: suggestedDriver ? suggestedDriver.id : null,
-    };
-
-    const requests = loadStorage(STORAGE_KEYS.requests, []);
-    requests.unshift(requestRecord);
-    saveStorage(STORAGE_KEYS.requests, requests);
-
-    lastSummary = createRequestSummary(requestRecord, suggestedDriver);
-
-    if (ui.emailLink) {
-      ui.emailLink.href = createMailtoLink(getOperatorEmail(), requestRecord, suggestedDriver);
-    }
-
-    if (ui.requestResultCopy) {
-      ui.requestResultCopy.textContent = suggestedDriver
-        ? `${suggestedDriver.name} looks like the closest current match. Open the email draft to notify dispatch with the full request.`
-        : "The request has been saved. No suitable driver is registered yet, so the dispatch board is waiting for you to match one manually.";
-    }
-
-    if (ui.requestResult) {
-      ui.requestResult.hidden = false;
-    }
-
-    renderDashboard();
-    ui.requestForm.reset();
-    resetAddressAutocompleteField(ui.addressFields.from);
-    resetAddressAutocompleteField(ui.addressFields.to);
-
-    if (ui.requestForm.elements.moveDate) {
-      ui.requestForm.elements.moveDate.value = todayIsoDate();
-      ui.requestForm.elements.moveDate.min = todayIsoDate();
-    }
-  } catch (error) {
-    renderErrorQuote(error.message);
-  } finally {
-    setRequestLoadingState(false);
-  }
 }
 
 async function handleDriverSubmit(event) {
@@ -304,14 +304,183 @@ async function handleDriverSubmit(event) {
   renderDashboard();
 }
 
+function handleRequestFormMutation() {
+  if (!pendingRequestDraft && (!ui.requestResult || ui.requestResult.hidden)) {
+    return;
+  }
+
+  pendingRequestDraft = null;
+  hideEstimateActions();
+  hideRequestStatus();
+  lastSummary = "";
+}
+
+async function handleConfirmRequest() {
+  if (!pendingRequestDraft || requestConfirmationInFlight) {
+    return;
+  }
+
+  requestConfirmationInFlight = true;
+  setConfirmRequestLoadingState(true);
+
+  const { payload, route, estimate, suggestedDriver } = pendingRequestDraft;
+  const requestRecord = {
+    id: createId("request"),
+    createdAt: new Date().toISOString(),
+    ...payload,
+    route,
+    estimate,
+    suggestedDriverId: suggestedDriver ? suggestedDriver.id : null,
+  };
+
+  const requests = loadStorage(STORAGE_KEYS.requests, []);
+  requests.unshift(requestRecord);
+  saveStorage(STORAGE_KEYS.requests, requests);
+  renderDashboard();
+
+  lastSummary = createRequestSummary(requestRecord, suggestedDriver);
+
+  if (ui.emailLink) {
+    ui.emailLink.href = createMailtoLink(getOperatorEmail(), requestRecord, suggestedDriver);
+  }
+
+  try {
+    await sendAutomatedNotification(requestRecord, suggestedDriver);
+    showRequestStatus({
+      title: "Request sent to dispatch",
+      tone: "success",
+      message: suggestedDriver
+        ? `${suggestedDriver.name} looks like the closest current match. The operator has been notified by email, and the backup draft is ready below if you still want it.`
+        : "The operator has been notified by email and can now review the move and match a driver manually.",
+      showActions: true,
+    });
+  } catch (error) {
+    showRequestStatus({
+      title: "Request saved, email needs attention",
+      tone: "warning",
+      message: `${error.message} The request is still saved, and the backup email draft below is ready to use.`,
+      showActions: true,
+    });
+  } finally {
+    pendingRequestDraft = null;
+    hideEstimateActions();
+    requestConfirmationInFlight = false;
+    setConfirmRequestLoadingState(false);
+    resetRequestForm();
+  }
+}
+
+function handleCancelRequest() {
+  if (!pendingRequestDraft || requestConfirmationInFlight) {
+    return;
+  }
+
+  pendingRequestDraft = null;
+  lastSummary = "";
+  hideEstimateActions();
+  showRequestStatus({
+    title: "Estimate canceled",
+    tone: "neutral",
+    message: "Nothing was saved and no email was sent. Update any details you want and calculate again when you are ready.",
+    showActions: false,
+  });
+}
+
 function setRequestLoadingState(isLoading) {
   if (ui.requestSubmitButton) {
     ui.requestSubmitButton.disabled = isLoading;
-    ui.requestSubmitButton.textContent = isLoading ? "Calculating..." : "Estimate and request driver";
+    ui.requestSubmitButton.textContent = isLoading ? "Calculating..." : "Calculate estimate";
   }
 
   if (ui.requestResult && isLoading) {
     ui.requestResult.hidden = true;
+  }
+}
+
+function setConfirmRequestLoadingState(isLoading) {
+  if (ui.confirmRequestButton) {
+    ui.confirmRequestButton.disabled = isLoading;
+    ui.confirmRequestButton.textContent = isLoading ? "Sending request..." : "Request driver";
+  }
+
+  if (ui.cancelRequestButton) {
+    ui.cancelRequestButton.disabled = isLoading;
+  }
+}
+
+function showEstimateActions(estimate, suggestedDriver) {
+  if (!ui.estimateActions) {
+    return;
+  }
+
+  if (ui.estimateActionsTitle) {
+    ui.estimateActionsTitle.textContent = "Ready to request this move?";
+  }
+
+  if (ui.estimateActionsCopy) {
+    ui.estimateActionsCopy.textContent = suggestedDriver
+      ? `${suggestedDriver.name} looks like the closest current match. Confirm now to save the request and email the operator automatically.`
+      : `This estimate is ready at ${formatCurrency(estimate.total)}. Confirm now to save the request and email the operator so they can match a driver manually.`;
+  }
+
+  ui.estimateActions.hidden = false;
+}
+
+function hideEstimateActions() {
+  if (ui.estimateActions) {
+    ui.estimateActions.hidden = true;
+  }
+
+  setConfirmRequestLoadingState(false);
+}
+
+function showRequestStatus({ title, message, tone = "neutral", showActions = false }) {
+  if (!ui.requestResult) {
+    return;
+  }
+
+  ui.requestResult.dataset.tone = tone;
+
+  if (ui.requestResultTitle) {
+    ui.requestResultTitle.textContent = title;
+  }
+
+  if (ui.requestResultCopy) {
+    ui.requestResultCopy.textContent = message;
+  }
+
+  if (ui.requestResultActions) {
+    ui.requestResultActions.hidden = !showActions;
+  }
+
+  ui.requestResult.hidden = false;
+}
+
+function hideRequestStatus() {
+  if (!ui.requestResult) {
+    return;
+  }
+
+  ui.requestResult.hidden = true;
+  delete ui.requestResult.dataset.tone;
+
+  if (ui.requestResultActions) {
+    ui.requestResultActions.hidden = false;
+  }
+}
+
+function resetRequestForm() {
+  if (!ui.requestForm) {
+    return;
+  }
+
+  ui.requestForm.reset();
+  resetAddressAutocompleteField(ui.addressFields.from);
+  resetAddressAutocompleteField(ui.addressFields.to);
+
+  if (ui.requestForm.elements.moveDate) {
+    ui.requestForm.elements.moveDate.value = todayIsoDate();
+    ui.requestForm.elements.moveDate.min = todayIsoDate();
   }
 }
 
@@ -953,8 +1122,36 @@ function createQuoteMessage(estimate, suggestedDriver) {
   return details.join(" ");
 }
 
+async function sendAutomatedNotification(requestRecord, suggestedDriver) {
+  const response = await fetch(NOTIFICATION_ENDPOINTS.requestEmail, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      requestId: requestRecord.id,
+      subject: createNotificationSubject(requestRecord),
+      customerEmail: requestRecord.customerEmail,
+      summary: createRequestSummary(requestRecord, suggestedDriver),
+    }),
+  });
+
+  const payload = await response.json();
+
+  if (!response.ok) {
+    throw new Error(payload.error || "Automatic operator email could not be sent from this deployment.");
+  }
+
+  return payload;
+}
+
+function createNotificationSubject(requestRecord) {
+  return `New On The Move request from ${requestRecord.customerName}`;
+}
+
 function createMailtoLink(operatorEmail, requestRecord, suggestedDriver) {
-  const subject = `New On The Move request from ${requestRecord.customerName}`;
+  const subject = createNotificationSubject(requestRecord);
   const body = createRequestSummary(requestRecord, suggestedDriver);
   return `mailto:${encodeURIComponent(operatorEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }

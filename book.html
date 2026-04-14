@@ -240,7 +240,7 @@
             </div>
 
             <div class="form-actions">
-              <button class="button button-primary" id="request-submit" type="submit">Estimate and request driver</button>
+              <button class="button button-primary" id="request-submit" type="submit">Calculate estimate</button>
               <p class="form-note">If address lookup fails, the backup distance is used so the customer can still continue.</p>
             </div>
 
@@ -308,16 +308,25 @@
               <p id="quote-message">Submit a move request to calculate a more realistic estimate using distance, route time, access, truck size, and date demand.</p>
             </div>
 
+            <div class="estimate-actions" id="estimate-actions" hidden>
+              <h4 id="estimate-actions-title">Ready to request this move?</h4>
+              <p id="estimate-actions-copy">If this estimate looks right, confirm the request and the operator will be notified automatically.</p>
+              <div class="action-row">
+                <button class="button button-primary" id="confirm-request" type="button">Request driver</button>
+                <button class="button button-ghost" id="cancel-request" type="button">Cancel request</button>
+              </div>
+            </div>
+
             <div class="operator-tip">
               <strong class="panel-title">Operator handoff</strong>
-              <p class="panel-note">Once the request is saved, an email draft is prepared so the operator can pick the best nearby driver manually.</p>
+              <p class="panel-note">Once the request is confirmed, the operator can be notified automatically by email, and a backup email draft stays available on this page.</p>
             </div>
 
             <div class="request-result" id="request-result" hidden>
-              <h4>Request saved</h4>
+              <h4 id="request-result-title">Request saved</h4>
               <p id="request-result-copy"></p>
-              <div class="action-row">
-                <a class="button button-secondary" id="email-link" href="#">Open operator email</a>
+              <div class="action-row" id="request-result-actions">
+                <a class="button button-secondary" id="email-link" href="#">Open backup email draft</a>
                 <button class="button button-ghost" id="copy-summary" type="button">Copy summary</button>
               </div>
             </div>

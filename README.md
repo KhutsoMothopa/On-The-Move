@@ -20,10 +20,11 @@ On The Move is a static multi-page website for a residential moving middleman bu
 
 1. A customer opens `book.html`.
 2. They enter their contact details, moving addresses, truck size, and moving details.
-3. The site calculates an estimate based on truck size, distance, helpers, and stairs.
-4. The request is saved in browser storage and an email draft link is prepared for the operator.
-5. Drivers are added through `drivers.html`.
-6. The `dispatch.html` page shows requests, registered drivers, and suggested matches.
+3. The site calculates an estimate based on truck size, distance, route time, helpers, access, and date demand.
+4. The customer can then confirm the request or cancel it.
+5. Once confirmed, the request is saved in browser storage and the operator can be notified automatically by email.
+6. Drivers are added through `drivers.html`.
+7. The `dispatch.html` page shows requests, registered drivers, and suggested matches.
 
 ## Local Run
 
@@ -85,6 +86,34 @@ GEOAPIFY_API_KEY=your_geoapify_api_key
 - If the Geoapify key is missing or the API is unavailable, the booking page falls back to the previous address and distance logic.
 - Geoapify's pricing page says the free plan can be used commercially with attribution.
 
+## Automated Email Notifications
+
+Confirmed move requests can send an operator notification email through a Vercel serverless function in `api/send-request-notification.js`.
+
+### Environment variables
+
+Add these environment variables in Vercel:
+
+```text
+RESEND_API_KEY=your_resend_api_key
+RESEND_FROM_EMAIL=On The Move <alerts@yourdomain.com>
+OPERATOR_NOTIFICATION_EMAIL=dispatch@yourdomain.com
+```
+
+### What to set up
+
+1. Create a Resend account.
+2. Generate a Resend API key.
+3. Verify the domain you want to send from.
+4. Add the three variables above in Vercel.
+
+### Notes
+
+- The booking page now calculates the estimate first, then asks the customer to confirm or cancel the request.
+- The operator notification is sent only after the customer confirms the request.
+- A backup mailto draft still appears in the UI even when automated email is enabled.
+- Resend requires a verified sending domain if you want to send to recipients other than your own test address.
+
 ## Important MVP Limitation
 
 This version uses `localStorage` in the browser.
@@ -97,9 +126,8 @@ That means:
 
 To make this a real shared live system, the next step is to connect:
 
-- a real database
-- a backend or serverless API
-- a real email service
+- a real shared database
+- a shared backend
 
 ## Project Files
 
