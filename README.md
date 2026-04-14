@@ -55,33 +55,35 @@ This project can be deployed to Vercel as a static site.
 5. Keep the default settings because this is a plain static HTML/CSS/JS site.
 6. Deploy.
 
-## Google Maps Integration
+## Geoapify Integration
 
-The `Book a move` page now supports Google-powered address suggestions and Google route distance lookup through Vercel serverless functions.
+The `Book a move` page now supports Geoapify-powered address suggestions and route distance lookup through Vercel serverless functions.
 
 ### What it uses
 
-- Places API Autocomplete (New)
-- Routes API
+- Geoapify Address Autocomplete API
+- Geoapify Routing API
 
 ### Environment variable
 
 Add this environment variable in Vercel:
 
 ```text
-GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+GEOAPIFY_API_KEY=your_geoapify_api_key
 ```
 
-### APIs to enable in Google Cloud
+### What to set up
 
-- Places API
-- Routes API
+1. Create a Geoapify account and project.
+2. Copy your Geoapify API key.
+3. Add it to Vercel as `GEOAPIFY_API_KEY`.
 
 ### Notes
 
-- The browser does not receive the Google API key directly.
-- The site calls Vercel API routes in `api/google-places-autocomplete.js` and `api/google-route.js`.
-- If the Google key is missing or the API is unavailable, the booking page falls back to the previous address/distance logic.
+- The browser does not receive the Geoapify API key directly.
+- The site calls Vercel API routes in `api/geoapify-autocomplete.js` and `api/geoapify-route.js`.
+- If the Geoapify key is missing or the API is unavailable, the booking page falls back to the previous address and distance logic.
+- Geoapify's pricing page says the free plan can be used commercially with attribution.
 
 ## Important MVP Limitation
 

@@ -21,9 +21,9 @@ const DEFAULT_SETTINGS = {
   operatorEmail: "dispatch@onthemove.co.za",
 };
 
-const GOOGLE_ENDPOINTS = {
-  autocomplete: "/api/google-places-autocomplete",
-  route: "/api/google-route",
+const GEOAPIFY_ENDPOINTS = {
+  autocomplete: "/api/geoapify-autocomplete",
+  route: "/api/geoapify-route",
 };
 
 const AUTOCOMPLETE_MIN_CHARS = 3;
@@ -63,13 +63,13 @@ const ui = {
   addressFields: {
     from: {
       input: document.querySelector('input[name="fromAddress"]'),
-      placeId: document.querySelector('input[name="fromPlaceId"]'),
+      coordinates: document.querySelector('input[name="fromCoordinates"]'),
       list: document.querySelector("#from-suggestions"),
       helper: document.querySelector("#from-address-helper"),
     },
     to: {
       input: document.querySelector('input[name="toAddress"]'),
-      placeId: document.querySelector('input[name="toPlaceId"]'),
+      coordinates: document.querySelector('input[name="toCoordinates"]'),
       list: document.querySelector("#to-suggestions"),
       helper: document.querySelector("#to-address-helper"),
     },
@@ -77,7 +77,7 @@ const ui = {
 };
 
 let lastSummary = "";
-let googleAutocompleteEnabled = true;
+let geoapifyAutocompleteEnabled = true;
 
 init();
 
@@ -127,8 +127,8 @@ async function handleRequestSubmit(event) {
     moveDate: formData.get("moveDate"),
     fromAddress: formData.get("fromAddress").trim(),
     toAddress: formData.get("toAddress").trim(),
-    fromPlaceId: String(formData.get("fromPlaceId") || "").trim(),
-    toPlaceId: String(formData.get("toPlaceId") || "").trim(),
+    fromCoordinates: String(formData.get("fromCoordinates") || "").trim(),
+    toCoordinates: String(formData.get("toCoordinates") || "").trim(),
     truckSize: formData.get("truckSize"),
     helpers: Number(formData.get("helpers") || 0),
     pickupFloor: Number(formData.get("pickupFloor") || 0),
@@ -247,7 +247,7 @@ function setRequestLoadingState(isLoading) {
 }
 
 function setupAddressAutocomplete(fieldKey, fieldUi) {
-  if (!fieldUi.input || !fieldUi.placeId || !fieldUi.list) {
+  if (!fieldUi.input || !fieldUi.coordinates || !fieldUi.list) {
     return;
   }
 
@@ -256,11 +256,11 @@ function setupAddressAutocomplete(fieldKey, fieldUi) {
   let activeIndex = -1;
 
   fieldUi.input.addEventListener("input", () => {
-    fieldUi.placeId.value = "";
+    fieldUi.coordinates.value = "";
     activeIndex = -1;
 
-    if (!googleAutocompleteEnabled) {
-      updateAutocompleteHelper(fieldUi, "Google suggestions are unavailable right now. You can still type the address manually.");
+    if (!geoapifyAutocompleteEnabled) {
+      updateAutocompleteHelper(fieldUi, "Address suggestions are unavailable right now. You can still type the address manually.");
       hideSuggestionList(fieldUi.list);
       return;
     }
@@ -278,7 +278,7 @@ function setupAddressAutocomplete(fieldKey, fieldUi) {
       return;
     }
 
-    updateAutocompleteHelper(fieldUi, "Searching Google address suggestions...");
+    updateAutocompleteHelper(fieldUi, "Searching address suggestions...");
 
     debounceTimer = window.setTimeout(async () => {
       try {
@@ -287,15 +287,15 @@ function setupAddressAutocomplete(fieldKey, fieldUi) {
         renderSuggestionList(fieldKey, fieldUi, suggestions, activeIndex);
 
         if (!suggestions.length) {
-          updateAutocompleteHelper(fieldUi, "No Google suggestions found yet. Keep typing or enter the address manually.");
+          updateAutocompleteHelper(fieldUi, "No suggestions found yet. Keep typing or enter the address manually.");
         } else {
-          updateAutocompleteHelper(fieldUi, "Select a Google suggestion to improve distance accuracy.");
+          updateAutocompleteHelper(fieldUi, "Select a suggested address to improve distance accuracy.");
         }
       } catch (error) {
-        googleAutocompleteEnabled = false;
+        geoapifyAutocompleteEnabled = false;
         suggestions = [];
         hideSuggestionList(fieldUi.list);
-        updateAutocompleteHelper(fieldUi, "Google suggestions are unavailable right now. You can still type the address manually.");
+        updateAutocompleteHelper(fieldUi, "Address suggestions are unavailable right now. You can still type the address manually.");
       }
     }, 240);
   });
@@ -337,7 +337,7 @@ function setupAddressAutocomplete(fieldKey, fieldUi) {
 }
 
 async function fetchAddressSuggestions(query) {
-  const endpoint = new URL(GOOGLE_ENDPOINTS.autocomplete, window.location.origin);
+  const endpoint = new URL(GEOAPIFY_ENDPOINTS.autocomplete, window.location.origin);
   endpoint.searchParams.set("q", query);
 
   const response = await fetch(endpoint.toString(), {
@@ -350,7 +350,7 @@ async function fetchAddressSuggestions(query) {
   const payload = await response.json();
 
   if (response.status === 503) {
-    throw new Error(payload.error || "Google autocomplete unavailable.");
+    throw new Error(payload.error || "Autocomplete unavailable.");
   }
 
   if (!response.ok) {
@@ -377,7 +377,7 @@ function renderSuggestionList(fieldKey, fieldUi, suggestions, activeIndex) {
         <button
           class="autocomplete-item${isActive}"
           data-field="${escapeHtml(fieldKey)}"
-          data-place-id="${escapeHtml(suggestion.placeId)}"
+          data-coordinates="${escapeHtml(suggestion.coordinates || "")}"
           data-address="${escapeHtml(suggestion.text)}"
           data-main-text="${escapeHtml(suggestion.mainText)}"
           data-secondary-text="${escapeHtml(suggestion.secondaryText || "")}"
@@ -398,7 +398,7 @@ function renderSuggestionList(fieldKey, fieldUi, suggestions, activeIndex) {
     button.addEventListener("mousedown", (event) => {
       event.preventDefault();
       selectAddressSuggestion(fieldUi, {
-        placeId: button.dataset.placeId,
+        coordinates: button.dataset.coordinates,
         text: button.dataset.address,
         mainText: button.dataset.mainText,
         secondaryText: button.dataset.secondaryText,
@@ -409,17 +409,17 @@ function renderSuggestionList(fieldKey, fieldUi, suggestions, activeIndex) {
 
 function selectAddressSuggestion(fieldUi, suggestion) {
   fieldUi.input.value = suggestion.text;
-  fieldUi.placeId.value = suggestion.placeId;
+  fieldUi.coordinates.value = suggestion.coordinates || "";
   hideSuggestionList(fieldUi.list);
-  updateAutocompleteHelper(fieldUi, `Selected Google address: ${suggestion.mainText || suggestion.text}`);
+  updateAutocompleteHelper(fieldUi, `Selected address: ${suggestion.mainText || suggestion.text}`);
 }
 
 function resetAddressAutocompleteField(fieldUi) {
-  if (!fieldUi.input || !fieldUi.placeId) {
+  if (!fieldUi.input || !fieldUi.coordinates) {
     return;
   }
 
-  fieldUi.placeId.value = "";
+  fieldUi.coordinates.value = "";
   hideSuggestionList(fieldUi.list);
 
   if (fieldUi.helper) {
@@ -476,7 +476,7 @@ function renderQuote(estimate, route, payload, suggestedDriver) {
   }
 
   const routeSourceLabel = {
-    google: "Google driving route",
+    geoapify: "Geoapify driving route",
     route: "Live road route",
     aerial: "Fallback aerial estimate",
     manual: "Manual backup distance",
@@ -620,17 +620,17 @@ async function resolveDistance(payload) {
   const {
     fromAddress,
     toAddress,
-    fromPlaceId,
-    toPlaceId,
+    fromCoordinates,
+    toCoordinates,
     manualDistance,
   } = payload;
 
   try {
-    return await fetchGoogleRoute({
+    return await fetchGeoapifyRoute({
       fromAddress,
       toAddress,
-      fromPlaceId,
-      toPlaceId,
+      fromCoordinates,
+      toCoordinates,
     });
   } catch (error) {
     // Fall through to the existing open-data/manual fallback so the page stays usable.
@@ -671,20 +671,20 @@ async function resolveDistance(payload) {
   }
 }
 
-async function fetchGoogleRoute({ fromAddress, toAddress, fromPlaceId, toPlaceId }) {
+async function fetchGeoapifyRoute({ fromAddress, toAddress, fromCoordinates, toCoordinates }) {
   if (!fromAddress || !toAddress) {
     throw new Error("Origin and destination are required.");
   }
 
-  const response = await fetch(GOOGLE_ENDPOINTS.route, {
+  const response = await fetch(GEOAPIFY_ENDPOINTS.route, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
     },
     body: JSON.stringify({
-      originPlaceId: fromPlaceId || "",
-      destinationPlaceId: toPlaceId || "",
+      originCoordinates: fromCoordinates || "",
+      destinationCoordinates: toCoordinates || "",
       originAddress: fromAddress,
       destinationAddress: toAddress,
     }),
@@ -693,11 +693,11 @@ async function fetchGoogleRoute({ fromAddress, toAddress, fromPlaceId, toPlaceId
   const payload = await response.json();
 
   if (!response.ok) {
-    throw new Error(payload.error || "Google route lookup failed.");
+    throw new Error(payload.error || "Geoapify route lookup failed.");
   }
 
   return {
-    source: "google",
+    source: "geoapify",
     distanceKm: payload.distanceKm,
     durationMinutes: payload.durationMinutes,
     staticDurationMinutes: payload.staticDurationMinutes,
@@ -808,7 +808,7 @@ function canHandleRequest(driverTruckSize, requestedTruckSize) {
 
 function createRequestSummary(requestRecord, suggestedDriver) {
   const routeSource = {
-    google: "Google driving route",
+    geoapify: "Geoapify driving route",
     route: "live route",
     aerial: "aerial fallback",
     manual: "manual backup",
