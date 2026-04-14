@@ -1,20 +1,18 @@
 # On The Move
 
-On The Move is a static multi-page website for a residential moving middleman business. It connects people who need help moving with local bakkie and small-truck drivers.
+On The Move is a static multi-page website for a residential moving middleman business. It helps customers get an estimate and send a move request to a middleman who then coordinates the right bakkie or small truck manually.
 
 ## Pages
 
 - `index.html` - landing page and overview
 - `book.html` - customer booking page
-- `drivers.html` - driver registration page
 - `dispatch.html` - operator dispatch board
 
 ## How To Navigate
 
 1. Open the home page at `index.html`.
 2. Click `Book a move` to simulate the customer journey.
-3. Click `Drivers` to register drivers and their vehicles.
-4. Click `Dispatch` to review incoming requests and the registered driver pool.
+3. Click `Dispatch` to review incoming requests and the operator workflow.
 
 ## How The Workflow Works
 
@@ -23,8 +21,7 @@ On The Move is a static multi-page website for a residential moving middleman bu
 3. The site calculates an estimate based on truck size, distance, route time, helpers, access, and date demand.
 4. The customer can then confirm the request or cancel it.
 5. Once confirmed, the request is saved in browser storage and the operator can be notified automatically by email.
-6. Drivers are added through `drivers.html`.
-7. The `dispatch.html` page shows requests, registered drivers, and suggested matches.
+6. The `dispatch.html` page shows incoming customer requests for manual follow-up by the middleman.
 
 ## Local Run
 
@@ -121,7 +118,6 @@ This version uses `localStorage` in the browser.
 That means:
 
 - requests are stored only in the browser where they were submitted
-- driver registrations are stored only in the browser where they were created
 - data is not shared across devices yet
 
 To make this a real shared live system, the next step is to connect:
@@ -133,7 +129,6 @@ To make this a real shared live system, the next step is to connect:
 
 - `index.html` - landing page
 - `book.html` - booking form
-- `drivers.html` - driver registration form
 - `dispatch.html` - dispatch board
 - `styles.css` - shared styling
 - `app.js` - shared client-side logic

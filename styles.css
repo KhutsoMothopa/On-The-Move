@@ -434,7 +434,6 @@ button {
 .steps-grid,
 .overview-grid,
 .booking-grid,
-.driver-grid,
 .dispatch-grid,
 .lists-grid,
 .field-grid,
@@ -464,7 +463,6 @@ button {
 .step-card h3,
 .form-title-row h3,
 .panel-heading h3,
-.driver-copy h3,
 .quote-header h3,
 .page-stat strong,
 .insight-card h3,
@@ -726,10 +724,6 @@ button {
   align-items: start;
 }
 
-.driver-grid {
-  grid-template-columns: minmax(300px, 0.72fr) minmax(0, 1.28fr);
-}
-
 .dispatch-grid {
   grid-template-columns: minmax(300px, 0.76fr) minmax(0, 1.24fr);
   align-items: start;
@@ -738,8 +732,7 @@ button {
 .form-panel,
 .quote-panel,
 .settings-panel,
-.list-panel,
-.driver-copy {
+.list-panel {
   padding: 28px;
 }
 
@@ -1017,11 +1010,6 @@ button {
   margin-top: 16px;
 }
 
-.driver-copy p,
-.driver-copy li {
-  color: rgba(248, 244, 238, 0.8);
-}
-
 .stats-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 20px;
@@ -1136,7 +1124,6 @@ button {
   .hero,
   .page-hero-grid,
   .booking-grid,
-  .driver-grid,
   .dispatch-grid,
   .home-cta,
   .footer-grid {
@@ -1188,7 +1175,6 @@ button {
   .quote-panel,
   .settings-panel,
   .list-panel,
-  .driver-copy,
   .site-footer {
     padding: 22px;
   }

@@ -1,6 +1,5 @@
 const STORAGE_KEYS = {
   requests: "otm_requests",
-  drivers: "otm_drivers",
   settings: "otm_settings",
 };
 
@@ -99,10 +98,8 @@ const AUTOCOMPLETE_MIN_CHARS = 3;
 
 const ui = {
   requestForm: document.querySelector("#request-form"),
-  driverForm: document.querySelector("#driver-form"),
   operatorEmailInput: document.querySelector("#operator-email"),
   requestSubmitButton: document.querySelector("#request-submit"),
-  driverFeedback: document.querySelector("#driver-feedback"),
   estimateActions: document.querySelector("#estimate-actions"),
   estimateActionsTitle: document.querySelector("#estimate-actions-title"),
   estimateActionsCopy: document.querySelector("#estimate-actions-copy"),
@@ -131,12 +128,11 @@ const ui = {
   },
   stats: {
     requests: document.querySelector("#stat-requests"),
-    drivers: document.querySelector("#stat-drivers"),
-    matches: document.querySelector("#stat-matches"),
+    today: document.querySelector("#stat-today"),
+    average: document.querySelector("#stat-average"),
   },
   lists: {
     requests: document.querySelector("#requests-list"),
-    drivers: document.querySelector("#drivers-list"),
   },
   addressFields: {
     from: {
@@ -181,10 +177,6 @@ function init() {
     setupAddressAutocomplete("to", ui.addressFields.to);
   }
 
-  if (ui.driverForm) {
-    ui.driverForm.addEventListener("submit", handleDriverSubmit);
-  }
-
   if (ui.copySummaryButton) {
     ui.copySummaryButton.addEventListener("click", copyLastSummary);
   }
@@ -217,18 +209,15 @@ async function handleRequestSubmit(event) {
   try {
     const route = await resolveDistance(payload);
     const estimate = calculateEstimate(payload, route);
-    const drivers = loadStorage(STORAGE_KEYS.drivers, []);
-    const suggestedDriver = findClosestDriver(drivers, payload, route);
 
-    renderQuote(estimate, route, payload, suggestedDriver);
+    renderQuote(estimate, route, payload);
     pendingRequestDraft = {
       payload,
       route,
       estimate,
-      suggestedDriver,
     };
     lastSummary = "";
-    showEstimateActions(estimate, suggestedDriver);
+    showEstimateActions(estimate);
     hideRequestStatus();
   } catch (error) {
     pendingRequestDraft = null;
@@ -261,49 +250,6 @@ function getRequestPayloadFromForm() {
   };
 }
 
-async function handleDriverSubmit(event) {
-  event.preventDefault();
-
-  const formData = new FormData(ui.driverForm);
-  const driver = {
-    id: createId("driver"),
-    createdAt: new Date().toISOString(),
-    name: formData.get("driverName").trim(),
-    phone: formData.get("driverPhone").trim(),
-    email: formData.get("driverEmail").trim(),
-    truckSize: formData.get("driverTruckSize"),
-    baseLocation: formData.get("baseLocation").trim(),
-    serviceAreas: splitAreas(formData.get("serviceAreas")),
-    helpersAvailable: Number(formData.get("driverHelpers") || 0),
-    vehicleRegistration: formData.get("vehicleRegistration").trim(),
-    notes: formData.get("driverNotes").trim(),
-  };
-
-  if (ui.driverFeedback) {
-    ui.driverFeedback.textContent = "Saving driver and checking the base location...";
-  }
-
-  try {
-    driver.location = await geocodeAddress(driver.baseLocation);
-  } catch (error) {
-    driver.location = null;
-  }
-
-  const drivers = loadStorage(STORAGE_KEYS.drivers, []);
-  drivers.unshift(driver);
-  saveStorage(STORAGE_KEYS.drivers, drivers);
-
-  ui.driverForm.reset();
-
-  if (ui.driverFeedback) {
-    ui.driverFeedback.textContent = driver.location
-      ? "Driver saved. Their base location was geocoded for distance-based dispatch matching."
-      : "Driver saved. The profile is usable, but the base location could not be geocoded, so matching will use service-area text instead.";
-  }
-
-  renderDashboard();
-}
-
 function handleRequestFormMutation() {
   if (!pendingRequestDraft && (!ui.requestResult || ui.requestResult.hidden)) {
     return;
@@ -323,14 +269,13 @@ async function handleConfirmRequest() {
   requestConfirmationInFlight = true;
   setConfirmRequestLoadingState(true);
 
-  const { payload, route, estimate, suggestedDriver } = pendingRequestDraft;
+  const { payload, route, estimate } = pendingRequestDraft;
   const requestRecord = {
     id: createId("request"),
     createdAt: new Date().toISOString(),
     ...payload,
     route,
     estimate,
-    suggestedDriverId: suggestedDriver ? suggestedDriver.id : null,
   };
 
   const requests = loadStorage(STORAGE_KEYS.requests, []);
@@ -338,20 +283,18 @@ async function handleConfirmRequest() {
   saveStorage(STORAGE_KEYS.requests, requests);
   renderDashboard();
 
-  lastSummary = createRequestSummary(requestRecord, suggestedDriver);
+  lastSummary = createRequestSummary(requestRecord);
 
   if (ui.emailLink) {
-    ui.emailLink.href = createMailtoLink(getOperatorEmail(), requestRecord, suggestedDriver);
+    ui.emailLink.href = createMailtoLink(getOperatorEmail(), requestRecord);
   }
 
   try {
-    await sendAutomatedNotification(requestRecord, suggestedDriver);
+    await sendAutomatedNotification(requestRecord);
     showRequestStatus({
-      title: "Request sent to dispatch",
+      title: "Request sent to On The Move",
       tone: "success",
-      message: suggestedDriver
-        ? `${suggestedDriver.name} looks like the closest current match. The operator has been notified by email, and the backup draft is ready below if you still want it.`
-        : "The operator has been notified by email and can now review the move and match a driver manually.",
+      message: "The middleman has been notified by email and can now arrange a suitable truck or bakkie for the move. The backup draft is still available below if needed.",
       showActions: true,
     });
   } catch (error) {
@@ -400,7 +343,7 @@ function setRequestLoadingState(isLoading) {
 function setConfirmRequestLoadingState(isLoading) {
   if (ui.confirmRequestButton) {
     ui.confirmRequestButton.disabled = isLoading;
-    ui.confirmRequestButton.textContent = isLoading ? "Sending request..." : "Request driver";
+    ui.confirmRequestButton.textContent = isLoading ? "Sending request..." : "Send request";
   }
 
   if (ui.cancelRequestButton) {
@@ -408,7 +351,7 @@ function setConfirmRequestLoadingState(isLoading) {
   }
 }
 
-function showEstimateActions(estimate, suggestedDriver) {
+function showEstimateActions(estimate) {
   if (!ui.estimateActions) {
     return;
   }
@@ -418,9 +361,7 @@ function showEstimateActions(estimate, suggestedDriver) {
   }
 
   if (ui.estimateActionsCopy) {
-    ui.estimateActionsCopy.textContent = suggestedDriver
-      ? `${suggestedDriver.name} looks like the closest current match. Confirm now to save the request and email the operator automatically.`
-      : `This estimate is ready at ${formatCurrency(estimate.total)}. Confirm now to save the request and email the operator so they can match a driver manually.`;
+    ui.estimateActionsCopy.textContent = `This estimate is ready at ${formatCurrency(estimate.total)}. Confirm now to save the request and notify the middleman so they can arrange a suitable truck or bakkie for you.`;
   }
 
   ui.estimateActions.hidden = false;
@@ -732,7 +673,7 @@ function calculateEstimate(payload, route) {
   };
 }
 
-function renderQuote(estimate, route, payload, suggestedDriver) {
+function renderQuote(estimate, route, payload) {
   if (!ui.quote.title) {
     return;
   }
@@ -761,7 +702,7 @@ function renderQuote(estimate, route, payload, suggestedDriver) {
   ui.quote.schedule.textContent = formatCurrency(estimate.scheduleFee);
   ui.quote.minimum.textContent = formatCurrency(estimate.minimumCharge);
   ui.quote.service.textContent = formatCurrency(estimate.serviceFee);
-  ui.quote.message.textContent = createQuoteMessage(estimate, suggestedDriver);
+  ui.quote.message.textContent = createQuoteMessage(estimate);
 }
 
 function renderErrorQuote(message) {
@@ -786,40 +727,35 @@ function renderErrorQuote(message) {
 
 function renderDashboard() {
   const requests = loadStorage(STORAGE_KEYS.requests, []);
-  const drivers = loadStorage(STORAGE_KEYS.drivers, []);
-  const matches = requests.filter((request) => request.suggestedDriverId).length;
 
   if (ui.stats.requests) {
     ui.stats.requests.textContent = String(requests.length);
   }
 
-  if (ui.stats.drivers) {
-    ui.stats.drivers.textContent = String(drivers.length);
+  if (ui.stats.today) {
+    ui.stats.today.textContent = String(countTodayRequests(requests));
   }
 
-  if (ui.stats.matches) {
-    ui.stats.matches.textContent = String(matches);
+  if (ui.stats.average) {
+    ui.stats.average.textContent = requests.length ? formatCurrency(getAverageQuote(requests)) : "R0";
   }
 
-  renderRequestList(requests, drivers);
-  renderDriverList(drivers);
+  renderRequestList(requests);
 }
 
-function renderRequestList(requests, drivers) {
+function renderRequestList(requests) {
   if (!ui.lists.requests) {
     return;
   }
 
   if (!requests.length) {
     ui.lists.requests.innerHTML =
-      '<div class="empty-state">No requests yet. The first customer booking will appear here with its estimate and suggested driver.</div>';
+      '<div class="empty-state">No requests yet. The first confirmed customer request will appear here for operator follow-up.</div>';
     return;
   }
 
   ui.lists.requests.innerHTML = requests
     .map((request) => {
-      const driver = drivers.find((item) => item.id === request.suggestedDriverId);
-
       return `
         <article class="list-card">
           <div class="list-card-top">
@@ -833,12 +769,12 @@ function renderRequestList(requests, drivers) {
             <span class="tag">${request.route.distanceKm.toFixed(1)} km</span>
           </div>
           <div class="tag-row">
-            ${
-              driver
-                ? `<span class="tag tag-teal">Suggested driver: ${escapeHtml(driver.name)}</span>`
-                : '<span class="tag">No suggested driver yet</span>'
-            }
+            <span class="tag tag-teal">Operator follow-up needed</span>
             <span class="tag">Move date: ${escapeHtml(request.moveDate || "Not set")}</span>
+          </div>
+          <div class="tag-row">
+            <span class="tag">${escapeHtml(request.customerPhone)}</span>
+            <span class="tag">${request.helpers} helper(s)</span>
           </div>
         </article>
       `;
@@ -846,41 +782,27 @@ function renderRequestList(requests, drivers) {
     .join("");
 }
 
-function renderDriverList(drivers) {
-  if (!ui.lists.drivers) {
-    return;
+function countTodayRequests(requests) {
+  const today = todayIsoDate();
+
+  return requests.filter((request) => {
+    const createdAt = new Date(request.createdAt);
+
+    if (Number.isNaN(createdAt.getTime())) {
+      return false;
+    }
+
+    return createdAt.toISOString().slice(0, 10) === today;
+  }).length;
+}
+
+function getAverageQuote(requests) {
+  if (!requests.length) {
+    return 0;
   }
 
-  if (!drivers.length) {
-    ui.lists.drivers.innerHTML =
-      '<div class="empty-state">No drivers registered yet. Save a driver profile above and it will appear here.</div>';
-    return;
-  }
-
-  ui.lists.drivers.innerHTML = drivers
-    .map((driver) => {
-      const locationStatus = driver.location ? "Location matched" : "Text area match only";
-
-      return `
-        <article class="list-card">
-          <div class="list-card-top">
-            <h4>${escapeHtml(driver.name)}</h4>
-            <small>${escapeHtml(driver.baseLocation)}</small>
-          </div>
-          <p>${escapeHtml(driver.phone)} | ${escapeHtml(driver.email)}</p>
-          <div class="tag-row">
-            <span class="tag tag-accent">${escapeHtml(TRUCK_TYPES[driver.truckSize].label)}</span>
-            <span class="tag">${driver.helpersAvailable} helper(s)</span>
-            <span class="tag">${escapeHtml(driver.vehicleRegistration)}</span>
-          </div>
-          <div class="tag-row">
-            <span class="tag tag-teal">${escapeHtml(locationStatus)}</span>
-            <span class="tag">${escapeHtml(driver.serviceAreas.join(", "))}</span>
-          </div>
-        </article>
-      `;
-    })
-    .join("");
+  const total = requests.reduce((sum, request) => sum + Number(request.estimate?.total || 0), 0);
+  return Math.round(total / requests.length);
 }
 
 async function resolveDistance(payload) {
@@ -1026,54 +948,7 @@ async function fetchRouteDistance(fromLocation, toLocation) {
   return payload.routes[0].distance / 1000;
 }
 
-function findClosestDriver(drivers, requestPayload, route) {
-  const eligibleDrivers = drivers.filter((driver) => canHandleRequest(driver.truckSize, requestPayload.truckSize));
-
-  if (eligibleDrivers.length === 0) {
-    return null;
-  }
-
-  return eligibleDrivers
-    .map((driver) => {
-      const areaMatch = driver.serviceAreas.some((area) =>
-        requestPayload.fromAddress.toLowerCase().includes(area.toLowerCase())
-      );
-
-      let distanceScore = Number.POSITIVE_INFINITY;
-
-      if (route.fromLocation && driver.location) {
-        distanceScore = haversineKm(driver.location, route.fromLocation);
-      } else if (areaMatch) {
-        distanceScore = 8;
-      } else {
-        distanceScore = 999;
-      }
-
-      return {
-        driver,
-        capacityGap: TRUCK_TYPES[driver.truckSize].order - TRUCK_TYPES[requestPayload.truckSize].order,
-        distanceScore,
-        areaMatch,
-      };
-    })
-    .sort((left, right) => {
-      if (left.distanceScore !== right.distanceScore) {
-        return left.distanceScore - right.distanceScore;
-      }
-
-      if (left.capacityGap !== right.capacityGap) {
-        return left.capacityGap - right.capacityGap;
-      }
-
-      return Number(right.areaMatch) - Number(left.areaMatch);
-    })[0].driver;
-}
-
-function canHandleRequest(driverTruckSize, requestedTruckSize) {
-  return TRUCK_TYPES[driverTruckSize].order >= TRUCK_TYPES[requestedTruckSize].order;
-}
-
-function createRequestSummary(requestRecord, suggestedDriver) {
+function createRequestSummary(requestRecord) {
   const routeSource = {
     geoapify: "Geoapify driving route",
     route: "live route",
@@ -1093,14 +968,12 @@ function createRequestSummary(requestRecord, suggestedDriver) {
     `Helpers requested: ${requestRecord.helpers}`,
     `Distance estimate: ${requestRecord.route.distanceKm.toFixed(1)} km (${routeSource})`,
     `Estimated total: ${formatCurrency(requestRecord.estimate.total)}`,
+    `Operator action: Source a suitable truck or bakkie and contact the customer`,
     `Special notes: ${requestRecord.notes || "None"}`,
-    suggestedDriver
-      ? `Suggested driver: ${suggestedDriver.name} | ${suggestedDriver.phone} | ${suggestedDriver.baseLocation}`
-      : "Suggested driver: none yet",
   ].join("\n");
 }
 
-function createQuoteMessage(estimate, suggestedDriver) {
+function createQuoteMessage(estimate) {
   const details = [
     `Includes the first ${estimate.includedKm} km and about ${formatMinutes(estimate.includedMinutes)} of crew time for this vehicle size.`,
   ];
@@ -1110,19 +983,15 @@ function createQuoteMessage(estimate, suggestedDriver) {
   }
 
   if (estimate.minimumCharge > 0) {
-    details.push("A minimum trip charge applies so short moves still cover dispatch and driver return time.");
+    details.push("A minimum trip charge applies so short moves still cover dispatch and scheduling time.");
   }
 
-  details.push(
-    suggestedDriver
-      ? `Suggested match: ${suggestedDriver.name} in ${suggestedDriver.baseLocation}. Review and connect them with the customer once you are happy with the fit.`
-      : "No registered driver matches this request yet. The estimate still works, and the request will appear on the dispatch board."
-  );
+  details.push("Once confirmed, this request is sent to the middleman so they can arrange the right truck or bakkie for the move.");
 
   return details.join(" ");
 }
 
-async function sendAutomatedNotification(requestRecord, suggestedDriver) {
+async function sendAutomatedNotification(requestRecord) {
   const response = await fetch(NOTIFICATION_ENDPOINTS.requestEmail, {
     method: "POST",
     headers: {
@@ -1133,7 +1002,7 @@ async function sendAutomatedNotification(requestRecord, suggestedDriver) {
       requestId: requestRecord.id,
       subject: createNotificationSubject(requestRecord),
       customerEmail: requestRecord.customerEmail,
-      summary: createRequestSummary(requestRecord, suggestedDriver),
+      summary: createRequestSummary(requestRecord),
     }),
   });
 
@@ -1150,9 +1019,9 @@ function createNotificationSubject(requestRecord) {
   return `New On The Move request from ${requestRecord.customerName}`;
 }
 
-function createMailtoLink(operatorEmail, requestRecord, suggestedDriver) {
+function createMailtoLink(operatorEmail, requestRecord) {
   const subject = createNotificationSubject(requestRecord);
-  const body = createRequestSummary(requestRecord, suggestedDriver);
+  const body = createRequestSummary(requestRecord);
   return `mailto:${encodeURIComponent(operatorEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
@@ -1205,13 +1074,6 @@ function createId(prefix) {
   }
 
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
-function splitAreas(value) {
-  return value
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
 }
 
 function formatCurrency(value) {
