@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Driver Registration | On The Move</title>
+  <meta
+    name="description"
+    content="Register bakkie and small-truck drivers on On The Move for residential moving jobs."
+  >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="On The Move home">
+        <span class="brand-mark">OTM</span>
+        <span class="brand-copy">
+          <strong>On The Move</strong>
+          <small>Residential moves made simpler</small>
+        </span>
+      </a>
+
+      <nav class="site-nav" aria-label="Primary">
+        <a href="index.html">Home</a>
+        <a href="book.html">Book a move</a>
+        <a aria-current="page" href="drivers.html">Drivers</a>
+        <a href="dispatch.html">Dispatch</a>
+      </nav>
+
+      <a class="button button-ghost" href="dispatch.html">Dispatch board</a>
+    </header>
+
+    <main>
+      <section class="page-hero panel">
+        <div class="page-hero-grid">
+          <div class="compact-copy">
+            <span class="eyebrow">Driver onboarding</span>
+            <h1>Register bakkie and small-truck drivers for residential moves.</h1>
+            <p>
+              This page acts as your starting driver database. Store contact details, truck size,
+              service areas, and base location so you can dispatch faster.
+            </p>
+          </div>
+          <div class="mock-card">
+            <div class="mock-row">
+              <span>Stored details</span>
+              <strong>Contacts, location, helpers, vehicle registration</strong>
+            </div>
+            <div class="mock-row">
+              <span>Matching logic</span>
+              <strong>Truck size + closest base location</strong>
+            </div>
+            <div class="mock-row">
+              <span>Database</span>
+              <strong>Local browser storage for MVP</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="driver-grid">
+          <div class="driver-copy panel panel-dark">
+            <h3>What you keep on file</h3>
+            <ul class="feature-list">
+              <li>Driver contact details and preferred service area</li>
+              <li>Bakkie or truck size so you know what jobs they can handle</li>
+              <li>Base location for nearest-driver suggestions</li>
+              <li>Vehicle registration and notes for your own records</li>
+            </ul>
+
+            <div class="info-card">
+              <strong>Good next step later</strong>
+              <p>
+                Replace the browser storage with a real database such as Supabase or Firebase, then connect a real email service.
+              </p>
+            </div>
+          </div>
+
+          <form class="panel form-panel" id="driver-form">
+            <div class="form-title-row">
+              <h3>Register a driver</h3>
+              <span class="pill pill-light">Operator view</span>
+            </div>
+
+            <div class="field-grid">
+              <label class="field">
+                <span>Driver name</span>
+                <input type="text" name="driverName" placeholder="Driver full name" required>
+              </label>
+              <label class="field">
+                <span>Phone number</span>
+                <input type="tel" name="driverPhone" placeholder="+27..." required>
+              </label>
+              <label class="field">
+                <span>Email address</span>
+                <input type="email" name="driverEmail" placeholder="driver@email.com" required>
+              </label>
+              <label class="field">
+                <span>Truck size</span>
+                <select name="driverTruckSize" required>
+                  <option value="bakkie">Bakkie / half-ton</option>
+                  <option value="one-ton">1-ton truck</option>
+                  <option value="one-point-five-ton">1.5-ton truck</option>
+                  <option value="three-ton">3-ton truck</option>
+                </select>
+              </label>
+              <label class="field field-full">
+                <span>Base location</span>
+                <input type="text" name="baseLocation" placeholder="Driver starting suburb or address" required>
+              </label>
+              <label class="field field-full">
+                <span>Service areas</span>
+                <input type="text" name="serviceAreas" placeholder="Rosebank, Sandton, Midrand" required>
+              </label>
+              <label class="field">
+                <span>Helpers available</span>
+                <input type="number" name="driverHelpers" min="0" max="6" value="0">
+              </label>
+              <label class="field">
+                <span>Vehicle registration</span>
+                <input type="text" name="vehicleRegistration" placeholder="AB 12 CD GP" required>
+              </label>
+              <label class="field field-full">
+                <span>Notes</span>
+                <textarea
+                  name="driverNotes"
+                  rows="4"
+                  placeholder="Availability, loading tools, blankets, ropes, or special conditions"
+                ></textarea>
+              </label>
+            </div>
+
+            <div class="form-actions">
+              <button class="button button-primary" id="driver-submit" type="submit">Save driver profile</button>
+              <p class="form-note" id="driver-feedback">Driver registrations are stored in the local browser database for this MVP.</p>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <span class="eyebrow">Registered drivers</span>
+          <h2>Preview the driver pool you have already captured.</h2>
+        </div>
+        <section class="panel list-panel">
+          <div class="panel-heading">
+            <h3>Driver database</h3>
+            <span class="pill pill-light">Local storage</span>
+          </div>
+          <div class="list-stack" id="drivers-list"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

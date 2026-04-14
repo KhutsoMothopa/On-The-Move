@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dispatch Board | On The Move</title>
+  <meta
+    name="description"
+    content="Review incoming moving requests, driver records, and operator email settings for On The Move."
+  >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="On The Move home">
+        <span class="brand-mark">OTM</span>
+        <span class="brand-copy">
+          <strong>On The Move</strong>
+          <small>Residential moves made simpler</small>
+        </span>
+      </a>
+
+      <nav class="site-nav" aria-label="Primary">
+        <a href="index.html">Home</a>
+        <a href="book.html">Book a move</a>
+        <a href="drivers.html">Drivers</a>
+        <a aria-current="page" href="dispatch.html">Dispatch</a>
+      </nav>
+
+      <a class="button button-ghost" href="book.html">New booking</a>
+    </header>
+
+    <main>
+      <section class="page-hero panel">
+        <div class="page-hero-grid">
+          <div class="compact-copy">
+            <span class="eyebrow">Dispatch board</span>
+            <h1>Manage requests, driver matches, and the operator handoff.</h1>
+            <p>
+              This is the middleman control page. Review all incoming requests, keep the operator email current,
+              and decide which driver should be connected to the customer.
+            </p>
+          </div>
+          <div class="mock-card">
+            <div class="mock-row">
+              <span>Primary action</span>
+              <strong>Match customer to nearest suitable driver</strong>
+            </div>
+            <div class="mock-row">
+              <span>Email handoff</span>
+              <strong>Ready-to-send draft for each request</strong>
+            </div>
+            <div class="mock-row">
+              <span>Current stage</span>
+              <strong>Payments handled later</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="dispatch-grid">
+          <aside class="panel settings-panel">
+            <div class="form-title-row">
+              <h3>Operator settings</h3>
+              <span class="pill pill-light">MVP email flow</span>
+            </div>
+
+            <label class="field">
+              <span>Operator email address</span>
+              <input id="operator-email" type="email" placeholder="dispatch@onthemove.co.za">
+            </label>
+
+            <p class="form-note">
+              New move requests create a ready-to-send email draft for this address. For production, swap this with a real email API.
+            </p>
+
+            <div class="stats-grid">
+              <article class="stat-card">
+                <span>Total requests</span>
+                <strong id="stat-requests">0</strong>
+              </article>
+              <article class="stat-card">
+                <span>Registered drivers</span>
+                <strong id="stat-drivers">0</strong>
+              </article>
+              <article class="stat-card">
+                <span>Dispatch-ready matches</span>
+                <strong id="stat-matches">0</strong>
+              </article>
+            </div>
+          </aside>
+
+          <div class="lists-grid">
+            <section class="panel list-panel">
+              <div class="panel-heading">
+                <h3>Incoming requests</h3>
+                <span class="pill pill-light">Newest first</span>
+              </div>
+              <div class="list-stack" id="requests-list"></div>
+            </section>
+
+            <section class="panel list-panel">
+              <div class="panel-heading">
+                <h3>Driver database</h3>
+                <span class="pill pill-light">Local storage</span>
+              </div>
+              <div class="list-stack" id="drivers-list"></div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
