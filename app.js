@@ -5,16 +5,81 @@ const STORAGE_KEYS = {
 };
 
 const TRUCK_TYPES = {
-  bakkie: { label: "Bakkie / half-ton", base: 420, perKm: 9, handlingFee: 90, loadFactor: 0.96, order: 1 },
-  "one-ton": { label: "1-ton truck", base: 650, perKm: 11, handlingFee: 120, loadFactor: 1, order: 2 },
-  "one-point-five-ton": { label: "1.5-ton truck", base: 920, perKm: 14, handlingFee: 160, loadFactor: 1.1, order: 3 },
-  "three-ton": { label: "3-ton truck", base: 1380, perKm: 18, handlingFee: 220, loadFactor: 1.2, order: 4 },
+  bakkie: {
+    label: "Bakkie / half-ton",
+    base: 490,
+    minimum: 750,
+    includedKm: 8,
+    localPerKm: 8,
+    longPerKm: 10,
+    includedMinutes: 120,
+    handlingMinutes: 70,
+    extraTimeRate: 120,
+    floorRate: 45,
+    helperRate: 180,
+    order: 1,
+  },
+  "one-ton": {
+    label: "1-ton truck",
+    base: 690,
+    minimum: 1050,
+    includedKm: 10,
+    localPerKm: 10,
+    longPerKm: 13,
+    includedMinutes: 150,
+    handlingMinutes: 90,
+    extraTimeRate: 170,
+    floorRate: 60,
+    helperRate: 210,
+    order: 2,
+  },
+  "one-point-five-ton": {
+    label: "1.5-ton truck",
+    base: 960,
+    minimum: 1450,
+    includedKm: 12,
+    localPerKm: 12,
+    longPerKm: 16,
+    includedMinutes: 180,
+    handlingMinutes: 115,
+    extraTimeRate: 220,
+    floorRate: 75,
+    helperRate: 240,
+    order: 3,
+  },
+  "three-ton": {
+    label: "3-ton truck",
+    base: 1450,
+    minimum: 2100,
+    includedKm: 15,
+    localPerKm: 15,
+    longPerKm: 20,
+    includedMinutes: 210,
+    handlingMinutes: 140,
+    extraTimeRate: 290,
+    floorRate: 95,
+    helperRate: 280,
+    order: 4,
+  },
 };
 
 const LOAD_DENSITY = {
-  light: { multiplier: 0.92 },
-  standard: { multiplier: 1 },
-  heavy: { multiplier: 1.18 },
+  light: { label: "Light load", timeMinutes: -10, accessMultiplier: 0.92 },
+  standard: { label: "Standard move", timeMinutes: 0, accessMultiplier: 1 },
+  heavy: { label: "Heavy / bulky", timeMinutes: 30, accessMultiplier: 1.24 },
+};
+
+const PRICING_RULES = {
+  longDistanceThresholdKm: 35,
+  stairMinutesPerFloor: 8,
+  helperTimeSavingsMinutes: 12,
+  platformFee: 145,
+  shortNoticePremium: 0.06,
+  urgentPremium: 0.1,
+  saturdayPremium: 0.06,
+  sundayPremium: 0.1,
+  monthEndPremium: 0.08,
+  premiumCap: 0.22,
 };
 
 const DEFAULT_SETTINGS = {
@@ -45,9 +110,11 @@ const ui = {
     truck: document.querySelector("#quote-truck"),
     base: document.querySelector("#breakdown-base"),
     distanceCharge: document.querySelector("#breakdown-distance"),
+    time: document.querySelector("#breakdown-time"),
     helpers: document.querySelector("#breakdown-helpers"),
-    stairs: document.querySelector("#breakdown-stairs"),
-    load: document.querySelector("#breakdown-load"),
+    access: document.querySelector("#breakdown-access"),
+    schedule: document.querySelector("#breakdown-schedule"),
+    minimum: document.querySelector("#breakdown-minimum"),
     service: document.querySelector("#breakdown-service"),
     message: document.querySelector("#quote-message"),
   },
@@ -93,6 +160,7 @@ function init() {
     ui.requestForm.addEventListener("submit", handleRequestSubmit);
     if (ui.requestForm.elements.moveDate) {
       ui.requestForm.elements.moveDate.value = todayIsoDate();
+      ui.requestForm.elements.moveDate.min = todayIsoDate();
     }
     setupAddressAutocomplete("from", ui.addressFields.from);
     setupAddressAutocomplete("to", ui.addressFields.to);
@@ -142,7 +210,7 @@ async function handleRequestSubmit(event) {
 
   try {
     const route = await resolveDistance(payload);
-    const estimate = calculateEstimate(payload, route.distanceKm);
+    const estimate = calculateEstimate(payload, route);
     const drivers = loadStorage(STORAGE_KEYS.drivers, []);
     const suggestedDriver = findClosestDriver(drivers, payload, route);
 
@@ -184,6 +252,7 @@ async function handleRequestSubmit(event) {
 
     if (ui.requestForm.elements.moveDate) {
       ui.requestForm.elements.moveDate.value = todayIsoDate();
+      ui.requestForm.elements.moveDate.min = todayIsoDate();
     }
   } catch (error) {
     renderErrorQuote(error.message);
@@ -442,31 +511,55 @@ function hideSuggestionList(listElement) {
   listElement.innerHTML = "";
 }
 
-function calculateEstimate(payload, distanceKm) {
+function calculateEstimate(payload, route) {
   const truck = TRUCK_TYPES[payload.truckSize];
-  const loadProfile = LOAD_DENSITY[payload.loadDensity];
-  const helperFee = payload.helpers * 190;
+  const loadProfile = LOAD_DENSITY[payload.loadDensity] || LOAD_DENSITY.standard;
+  const distanceKm = Math.max(0, Number(route.distanceKm) || 0);
   const stairCount = Math.max(0, payload.pickupFloor) + Math.max(0, payload.dropoffFloor);
-  const stairsFee = stairCount * 85;
-  const distanceCharge = distanceKm * truck.perKm;
-  const loadAdjustment = truck.handlingFee * (loadProfile.multiplier * truck.loadFactor - 1);
-  const serviceFee = 120;
+  const localDistanceKm = Math.max(0, Math.min(distanceKm, PRICING_RULES.longDistanceThresholdKm) - truck.includedKm);
+  const longDistanceKm = Math.max(0, distanceKm - PRICING_RULES.longDistanceThresholdKm);
+  const distanceCharge = localDistanceKm * truck.localPerKm + longDistanceKm * truck.longPerKm;
+  const helperFee = payload.helpers * truck.helperRate;
+  const routeMinutes = getRouteMinutes(route, distanceKm);
+  const baseHandlingMinutes =
+    truck.handlingMinutes +
+    loadProfile.timeMinutes +
+    stairCount * PRICING_RULES.stairMinutesPerFloor;
+  const helperTimeSavings = Math.min(
+    Math.max(0, baseHandlingMinutes) * 0.25,
+    payload.helpers * PRICING_RULES.helperTimeSavingsMinutes
+  );
+  const estimatedJobMinutes = routeMinutes + Math.max(35, baseHandlingMinutes - helperTimeSavings);
+  const overageMinutes = Math.max(0, estimatedJobMinutes - truck.includedMinutes);
+  const timeCharge = Math.ceil(overageMinutes / 30) * truck.extraTimeRate;
+  const accessFee = stairCount * truck.floorRate * loadProfile.accessMultiplier;
+  const schedule = getScheduleBreakdown(payload.moveDate);
+  const serviceFee = PRICING_RULES.platformFee;
   const subtotal =
     truck.base +
     distanceCharge +
+    timeCharge +
     helperFee +
-    stairsFee +
-    Math.max(0, loadAdjustment) +
-    serviceFee;
+    accessFee;
+  const scheduleFee = subtotal * schedule.multiplier;
+  const minimumCharge = Math.max(0, truck.minimum - (subtotal + scheduleFee + serviceFee));
+  const total = subtotal + scheduleFee + minimumCharge + serviceFee;
 
   return {
-    total: Math.round(subtotal),
+    total: Math.round(total),
     base: Math.round(truck.base),
     distanceCharge: Math.round(distanceCharge),
+    timeCharge: Math.round(timeCharge),
     helperFee: Math.round(helperFee),
-    stairsFee: Math.round(stairsFee),
-    loadAdjustment: Math.round(Math.max(0, loadAdjustment)),
+    accessFee: Math.round(accessFee),
+    scheduleFee: Math.round(scheduleFee),
+    minimumCharge: Math.round(minimumCharge),
     serviceFee: Math.round(serviceFee),
+    routeMinutes: Math.round(routeMinutes),
+    estimatedJobMinutes: Math.round(estimatedJobMinutes),
+    includedMinutes: truck.includedMinutes,
+    includedKm: truck.includedKm,
+    scheduleLabel: schedule.label,
   };
 }
 
@@ -484,19 +577,22 @@ function renderQuote(estimate, route, payload, suggestedDriver) {
 
   ui.quote.title.textContent = "Estimated move total";
   ui.quote.total.textContent = formatCurrency(estimate.total);
-  ui.quote.distance.textContent = route.durationMinutes
-    ? `${route.distanceKm.toFixed(1)} km - ${routeSourceLabel} - ${route.durationMinutes} min`
-    : `${route.distanceKm.toFixed(1)} km - ${routeSourceLabel}`;
+  ui.quote.distance.textContent =
+    route.durationMinutes || estimate.routeMinutes
+      ? `${route.distanceKm.toFixed(1)} km - ${routeSourceLabel} - ${
+          route.durationMinutes ? route.durationMinutes : `about ${estimate.routeMinutes}`
+        } min`
+      : `${route.distanceKm.toFixed(1)} km - ${routeSourceLabel}`;
   ui.quote.truck.textContent = TRUCK_TYPES[payload.truckSize].label;
   ui.quote.base.textContent = formatCurrency(estimate.base);
   ui.quote.distanceCharge.textContent = formatCurrency(estimate.distanceCharge);
+  ui.quote.time.textContent = formatCurrency(estimate.timeCharge);
   ui.quote.helpers.textContent = formatCurrency(estimate.helperFee);
-  ui.quote.stairs.textContent = formatCurrency(estimate.stairsFee);
-  ui.quote.load.textContent = formatCurrency(estimate.loadAdjustment);
+  ui.quote.access.textContent = formatCurrency(estimate.accessFee);
+  ui.quote.schedule.textContent = formatCurrency(estimate.scheduleFee);
+  ui.quote.minimum.textContent = formatCurrency(estimate.minimumCharge);
   ui.quote.service.textContent = formatCurrency(estimate.serviceFee);
-  ui.quote.message.textContent = suggestedDriver
-    ? `Suggested match: ${suggestedDriver.name} in ${suggestedDriver.baseLocation}. Review and connect them with the customer once you are happy with the fit.`
-    : "No registered driver matches this request yet. The estimate still works, and the request will appear on the dispatch board.";
+  ui.quote.message.textContent = createQuoteMessage(estimate, suggestedDriver);
 }
 
 function renderErrorQuote(message) {
@@ -510,9 +606,11 @@ function renderErrorQuote(message) {
   ui.quote.truck.textContent = "Not calculated";
   ui.quote.base.textContent = "R0";
   ui.quote.distanceCharge.textContent = "R0";
+  ui.quote.time.textContent = "R0";
   ui.quote.helpers.textContent = "R0";
-  ui.quote.stairs.textContent = "R0";
-  ui.quote.load.textContent = "R0";
+  ui.quote.access.textContent = "R0";
+  ui.quote.schedule.textContent = "R0";
+  ui.quote.minimum.textContent = "R0";
   ui.quote.service.textContent = "R0";
   ui.quote.message.textContent = message;
 }
@@ -833,6 +931,28 @@ function createRequestSummary(requestRecord, suggestedDriver) {
   ].join("\n");
 }
 
+function createQuoteMessage(estimate, suggestedDriver) {
+  const details = [
+    `Includes the first ${estimate.includedKm} km and about ${formatMinutes(estimate.includedMinutes)} of crew time for this vehicle size.`,
+  ];
+
+  if (estimate.scheduleFee > 0 && estimate.scheduleLabel) {
+    details.push(`${estimate.scheduleLabel} premium is included in this estimate.`);
+  }
+
+  if (estimate.minimumCharge > 0) {
+    details.push("A minimum trip charge applies so short moves still cover dispatch and driver return time.");
+  }
+
+  details.push(
+    suggestedDriver
+      ? `Suggested match: ${suggestedDriver.name} in ${suggestedDriver.baseLocation}. Review and connect them with the customer once you are happy with the fit.`
+      : "No registered driver matches this request yet. The estimate still works, and the request will appear on the dispatch board."
+  );
+
+  return details.join(" ");
+}
+
 function createMailtoLink(operatorEmail, requestRecord, suggestedDriver) {
   const subject = `New On The Move request from ${requestRecord.customerName}`;
   const body = createRequestSummary(requestRecord, suggestedDriver);
@@ -905,6 +1025,22 @@ function formatCurrency(value) {
   }).format(value);
 }
 
+function formatMinutes(value) {
+  const minutes = Math.max(0, Math.round(Number(value) || 0));
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+
+  if (!hours) {
+    return `${remainder} min`;
+  }
+
+  if (!remainder) {
+    return `${hours} hr`;
+  }
+
+  return `${hours} hr ${remainder} min`;
+}
+
 function formatDateTime(value) {
   return new Intl.DateTimeFormat("en-ZA", {
     dateStyle: "medium",
@@ -916,6 +1052,70 @@ function todayIsoDate() {
   const now = new Date();
   const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
   return localDate.toISOString().split("T")[0];
+}
+
+function getRouteMinutes(route, distanceKm) {
+  if (route.durationMinutes) {
+    return Number(route.durationMinutes);
+  }
+
+  if (route.staticDurationMinutes) {
+    return Number(route.staticDurationMinutes);
+  }
+
+  const averageSpeedKmh = distanceKm > 40 ? 55 : 35;
+  return Math.max(15, Math.round((distanceKm / averageSpeedKmh) * 60));
+}
+
+function getScheduleBreakdown(moveDate) {
+  if (!moveDate) {
+    return { multiplier: 0, label: "Standard weekday rate" };
+  }
+
+  const moveDateTime = new Date(`${moveDate}T12:00:00`);
+
+  if (Number.isNaN(moveDateTime.getTime())) {
+    return { multiplier: 0, label: "Standard weekday rate" };
+  }
+
+  const labels = [];
+  let multiplier = 0;
+  const hoursUntilMove = (moveDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
+  const weekday = moveDateTime.getDay();
+  const lastDayOfMonth = new Date(
+    moveDateTime.getFullYear(),
+    moveDateTime.getMonth() + 1,
+    0
+  ).getDate();
+  const isMonthEndWindow =
+    moveDateTime.getDate() >= lastDayOfMonth - 2 ||
+    moveDateTime.getDate() <= 2;
+
+  if (hoursUntilMove <= 36) {
+    multiplier += PRICING_RULES.urgentPremium;
+    labels.push("urgent booking");
+  } else if (hoursUntilMove <= 72) {
+    multiplier += PRICING_RULES.shortNoticePremium;
+    labels.push("short-notice booking");
+  }
+
+  if (weekday === 6) {
+    multiplier += PRICING_RULES.saturdayPremium;
+    labels.push("Saturday demand");
+  } else if (weekday === 0) {
+    multiplier += PRICING_RULES.sundayPremium;
+    labels.push("Sunday demand");
+  }
+
+  if (isMonthEndWindow) {
+    multiplier += PRICING_RULES.monthEndPremium;
+    labels.push("month-end demand");
+  }
+
+  return {
+    multiplier: Math.min(multiplier, PRICING_RULES.premiumCap),
+    label: labels.length ? labels.join(" + ") : "Standard weekday rate",
+  };
 }
 
 function haversineKm(fromLocation, toLocation) {
