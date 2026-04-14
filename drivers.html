@@ -6,7 +6,7 @@
   <title>Driver Registration | On The Move</title>
   <meta
     name="description"
-    content="Register bakkie and small-truck drivers on On The Move for residential moving jobs."
+    content="Register local bakkie and small-truck drivers on On The Move for residential moving jobs."
   >
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,6 +18,15 @@
 </head>
 <body>
   <div class="page-shell">
+    <div class="utility-bar">
+      <div class="utility-pill-group">
+        <span class="utility-pill">Driver onboarding</span>
+        <span class="utility-pill">Service areas captured</span>
+        <span class="utility-pill">Dispatch-ready profiles</span>
+      </div>
+      <span class="micro-copy">This page helps you build the supply side of the business.</span>
+    </div>
+
     <header class="site-header">
       <a class="brand" href="index.html" aria-label="On The Move home">
         <span class="brand-mark">OTM</span>
@@ -42,24 +51,40 @@
         <div class="page-hero-grid">
           <div class="compact-copy">
             <span class="eyebrow">Driver onboarding</span>
-            <h1>Register bakkie and small-truck drivers for residential moves.</h1>
+            <h1>Build a driver network that is actually usable at dispatch time.</h1>
             <p>
-              This page acts as your starting driver database. Store contact details, truck size,
-              service areas, and base location so you can dispatch faster.
+              Good driver records are more than names and phone numbers. You want vehicle size, service areas,
+              helpers, and starting location so you can spot the best match quickly.
             </p>
+            <div class="signal-row">
+              <div class="page-stat">
+                <span>Vehicle fit</span>
+                <strong>Size aware</strong>
+              </div>
+              <div class="page-stat">
+                <span>Coverage</span>
+                <strong>Area based</strong>
+              </div>
+              <div class="page-stat">
+                <span>Dispatch use</span>
+                <strong>Closest first</strong>
+              </div>
+            </div>
           </div>
-          <div class="mock-card">
-            <div class="mock-row">
-              <span>Stored details</span>
-              <strong>Contacts, location, helpers, vehicle registration</strong>
+
+          <div class="page-side-stack">
+            <div class="route-card">
+              <h3 class="panel-title">A strong profile includes</h3>
+              <ul class="micro-list">
+                <li>Truck or bakkie size</li>
+                <li>Base suburb and service areas</li>
+                <li>Helper availability and vehicle registration</li>
+              </ul>
             </div>
-            <div class="mock-row">
-              <span>Matching logic</span>
-              <strong>Truck size + closest base location</strong>
-            </div>
-            <div class="mock-row">
-              <span>Database</span>
-              <strong>Local browser storage for MVP</strong>
+            <div class="insight-card">
+              <span class="pill pill-light">UX goal</span>
+              <h3>Fewer blank or weak records</h3>
+              <p class="support-text">The form now guides the operator through what matters most so the database stays useful later.</p>
             </div>
           </div>
         </div>
@@ -68,74 +93,110 @@
       <section class="section">
         <div class="driver-grid">
           <div class="driver-copy panel panel-dark">
-            <h3>What you keep on file</h3>
+            <h3>Why these details matter</h3>
             <ul class="feature-list">
-              <li>Driver contact details and preferred service area</li>
-              <li>Bakkie or truck size so you know what jobs they can handle</li>
-              <li>Base location for nearest-driver suggestions</li>
-              <li>Vehicle registration and notes for your own records</li>
+              <li>Truck size helps avoid mismatched jobs and wasted trips.</li>
+              <li>Base location makes it easier to identify who is closest to pickup.</li>
+              <li>Service areas show where the driver is realistically willing to work.</li>
+              <li>Helpers and notes make the dispatch decision faster when the job is urgent.</li>
             </ul>
 
             <div class="info-card">
-              <strong>Good next step later</strong>
-              <p>
-                Replace the browser storage with a real database such as Supabase or Firebase, then connect a real email service.
-              </p>
+              <strong>Best practice</strong>
+              <p>Capture a few high-quality driver profiles first. A smaller but clearer database is better than many incomplete records.</p>
             </div>
           </div>
 
           <form class="panel form-panel" id="driver-form">
-            <div class="form-title-row">
-              <h3>Register a driver</h3>
-              <span class="pill pill-light">Operator view</span>
+            <div class="form-intro">
+              <div class="form-title-row">
+                <h3>Register a driver</h3>
+                <span class="pill pill-light">Operator form</span>
+              </div>
+              <p class="section-kicker">Keep each profile complete enough for dispatch, not just for contact storage.</p>
             </div>
 
-            <div class="field-grid">
-              <label class="field">
-                <span>Driver name</span>
-                <input type="text" name="driverName" placeholder="Driver full name" required>
-              </label>
-              <label class="field">
-                <span>Phone number</span>
-                <input type="tel" name="driverPhone" placeholder="+27..." required>
-              </label>
-              <label class="field">
-                <span>Email address</span>
-                <input type="email" name="driverEmail" placeholder="driver@email.com" required>
-              </label>
-              <label class="field">
-                <span>Truck size</span>
-                <select name="driverTruckSize" required>
-                  <option value="bakkie">Bakkie / half-ton</option>
-                  <option value="one-ton">1-ton truck</option>
-                  <option value="one-point-five-ton">1.5-ton truck</option>
-                  <option value="three-ton">3-ton truck</option>
-                </select>
-              </label>
-              <label class="field field-full">
-                <span>Base location</span>
-                <input type="text" name="baseLocation" placeholder="Driver starting suburb or address" required>
-              </label>
-              <label class="field field-full">
-                <span>Service areas</span>
-                <input type="text" name="serviceAreas" placeholder="Rosebank, Sandton, Midrand" required>
-              </label>
-              <label class="field">
-                <span>Helpers available</span>
-                <input type="number" name="driverHelpers" min="0" max="6" value="0">
-              </label>
-              <label class="field">
-                <span>Vehicle registration</span>
-                <input type="text" name="vehicleRegistration" placeholder="AB 12 CD GP" required>
-              </label>
-              <label class="field field-full">
-                <span>Notes</span>
-                <textarea
-                  name="driverNotes"
-                  rows="4"
-                  placeholder="Availability, loading tools, blankets, ropes, or special conditions"
-                ></textarea>
-              </label>
+            <div class="form-stack">
+              <section class="form-group">
+                <div class="form-group-title">
+                  <h4>Driver details</h4>
+                  <span class="info-chip">Who is the driver?</span>
+                </div>
+                <div class="field-grid">
+                  <label class="field">
+                    <span>Driver name</span>
+                    <input type="text" name="driverName" placeholder="Driver full name" required>
+                  </label>
+                  <label class="field">
+                    <span>Phone number</span>
+                    <input type="tel" name="driverPhone" placeholder="+27..." required>
+                  </label>
+                  <label class="field field-full">
+                    <span>Email address</span>
+                    <input type="email" name="driverEmail" placeholder="driver@email.com" required>
+                  </label>
+                </div>
+              </section>
+
+              <section class="form-group">
+                <div class="form-group-title">
+                  <h4>Vehicle and crew</h4>
+                  <span class="info-chip">What can they handle?</span>
+                </div>
+                <div class="field-grid">
+                  <label class="field">
+                    <span>Truck size</span>
+                    <select name="driverTruckSize" required>
+                      <option value="bakkie">Bakkie / half-ton</option>
+                      <option value="one-ton">1-ton truck</option>
+                      <option value="one-point-five-ton">1.5-ton truck</option>
+                      <option value="three-ton">3-ton truck</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>Helpers available</span>
+                    <input type="number" name="driverHelpers" min="0" max="6" value="0">
+                  </label>
+                  <label class="field field-full">
+                    <span>Vehicle registration</span>
+                    <input type="text" name="vehicleRegistration" placeholder="AB 12 CD GP" required>
+                  </label>
+                </div>
+              </section>
+
+              <section class="form-group">
+                <div class="form-group-title">
+                  <h4>Coverage area</h4>
+                  <span class="info-chip">Where do they operate?</span>
+                </div>
+                <div class="field-grid">
+                  <label class="field field-full">
+                    <span>Base location</span>
+                    <input type="text" name="baseLocation" placeholder="Driver starting suburb or address" required>
+                  </label>
+                  <label class="field field-full">
+                    <span>Service areas</span>
+                    <input type="text" name="serviceAreas" placeholder="Rosebank, Sandton, Midrand" required>
+                  </label>
+                </div>
+              </section>
+
+              <section class="form-group">
+                <div class="form-group-title">
+                  <h4>Notes</h4>
+                  <span class="info-chip">Optional</span>
+                </div>
+                <div class="field-grid">
+                  <label class="field field-full">
+                    <span>Driver notes</span>
+                    <textarea
+                      name="driverNotes"
+                      rows="4"
+                      placeholder="Availability, ropes, blankets, loading tools, preferred areas, or special conditions"
+                    ></textarea>
+                  </label>
+                </div>
+              </section>
             </div>
 
             <div class="form-actions">
@@ -148,18 +209,44 @@
 
       <section class="section">
         <div class="section-heading">
-          <span class="eyebrow">Registered drivers</span>
+          <span class="eyebrow">Driver records</span>
           <h2>Preview the driver pool you have already captured.</h2>
+          <p>As the database grows, this view gives you a quick sense of coverage and the information quality of your profiles.</p>
         </div>
+
         <section class="panel list-panel">
           <div class="panel-heading">
-            <h3>Driver database</h3>
+            <h3>Registered drivers</h3>
             <span class="pill pill-light">Local storage</span>
           </div>
           <div class="list-stack" id="drivers-list"></div>
         </section>
       </section>
     </main>
+
+    <footer class="site-footer">
+      <div class="footer-grid">
+        <div class="footer-column">
+          <span class="eyebrow">Driver side</span>
+          <h3>Profiles here feed the dispatch board.</h3>
+          <p class="micro-copy">Every strong driver record makes the operator workflow more reliable and faster to use.</p>
+        </div>
+        <div class="footer-column">
+          <h4>Next page</h4>
+          <div class="footer-link-list">
+            <a href="dispatch.html">Open dispatch board</a>
+            <a href="book.html">Test a customer request</a>
+          </div>
+        </div>
+        <div class="footer-column">
+          <h4>Related</h4>
+          <div class="footer-link-list">
+            <a href="index.html">Back to home</a>
+            <a href="book.html">Customer booking</a>
+          </div>
+        </div>
+      </div>
+    </footer>
   </div>
 
   <script src="app.js"></script>

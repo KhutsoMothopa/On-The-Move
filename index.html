@@ -6,7 +6,7 @@
   <title>On The Move | Residential Moving Network</title>
   <meta
     name="description"
-    content="On The Move connects people who are moving with local bakkie and small-truck drivers."
+    content="On The Move connects people who are moving with local bakkie and small-truck drivers for residential jobs."
   >
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,6 +18,15 @@
 </head>
 <body>
   <div class="page-shell">
+    <div class="utility-bar">
+      <div class="utility-pill-group">
+        <span class="utility-pill">Residential moves only</span>
+        <span class="utility-pill">Bakkies and small trucks</span>
+        <span class="utility-pill">Operator-led dispatch</span>
+      </div>
+      <span class="micro-copy">Built for tenants, students, furniture pickups, and apartment moves.</span>
+    </div>
+
     <header class="site-header" id="top">
       <a class="brand" href="index.html" aria-label="On The Move home">
         <span class="brand-mark">OTM</span>
@@ -41,134 +50,197 @@
       <section class="hero">
         <div class="hero-copy">
           <span class="eyebrow">Your neighbourhood moving middleman</span>
-          <h1>Book the right bakkie or small truck for your move in minutes.</h1>
+          <h1>Move homes faster without chasing drivers yourself.</h1>
           <p class="hero-text">
-            On The Move helps tenants, students, and families request local moving help,
-            get an instant estimate, and be matched with the nearest available driver.
+            On The Move helps customers request the right bakkie or small truck, get a clear estimate,
+            and be matched with a nearby driver through one coordinated dispatch workflow.
           </p>
 
           <div class="hero-actions">
-            <a class="button button-primary" href="book.html">Request a driver</a>
-            <a class="button button-secondary" href="drivers.html">Register a bakkie</a>
+            <a class="button button-primary" href="book.html">Book a move</a>
+            <a class="button button-secondary" href="dispatch.html">See operator flow</a>
           </div>
 
-          <div class="hero-metrics">
-            <article class="metric-card">
-              <strong>Fast estimate</strong>
-              <p>Quote built from truck size, moving extras, and live route distance when available.</p>
+          <div class="hero-highlights">
+            <article class="hero-highlight">
+              <strong>Cleaner customer journey</strong>
+              <p class="support-text">Customers describe the move once and get an estimate before you step in.</p>
             </article>
-            <article class="metric-card">
-              <strong>Human dispatch</strong>
-              <p>You receive the request, pick the closest driver, then connect both sides yourself.</p>
+            <article class="hero-highlight">
+              <strong>Driver visibility</strong>
+              <p class="support-text">Drivers register vehicle size, service areas, and location for faster matching.</p>
             </article>
-            <article class="metric-card">
-              <strong>Driver database</strong>
-              <p>Drivers register their details, base location, and truck size so you can dispatch quickly.</p>
+            <article class="hero-highlight">
+              <strong>Human quality control</strong>
+              <p class="support-text">You stay in control of who gets the job, instead of auto-assigning risky matches.</p>
             </article>
           </div>
         </div>
 
         <aside class="hero-panel panel">
           <div class="hero-panel-top">
-            <span class="pill">Payments later</span>
-            <span class="status-dot">MVP workflow live</span>
+            <span class="pill">Payments added later</span>
+            <span class="status-dot">Workflow ready</span>
           </div>
 
-          <div class="mock-card">
-            <div class="mock-row">
-              <span>Pickup</span>
-              <strong>Rosebank, Johannesburg</strong>
+          <div class="route-card">
+            <h3 class="panel-title">Typical request</h3>
+            <p class="panel-note">A student moves out of a flat in Rosebank and needs a 1-ton truck plus one helper.</p>
+            <div class="route-visual">
+              <div class="route-line"></div>
+              <div class="route-pin route-pin-start"></div>
+              <div class="route-pin route-pin-end"></div>
             </div>
-            <div class="mock-row">
-              <span>Drop-off</span>
-              <strong>Braamfontein, Johannesburg</strong>
-            </div>
-            <div class="mock-row">
-              <span>Truck needed</span>
-              <strong>1-ton truck</strong>
-            </div>
-            <div class="mock-row">
-              <span>Estimated price</span>
-              <strong>R950 - R1,250</strong>
+            <div class="signal-row">
+              <div class="page-stat">
+                <span>Pickup</span>
+                <strong>Rosebank</strong>
+              </div>
+              <div class="page-stat">
+                <span>Vehicle</span>
+                <strong>1-ton</strong>
+              </div>
+              <div class="page-stat">
+                <span>Estimate</span>
+                <strong>R950+</strong>
+              </div>
             </div>
           </div>
 
           <div class="dispatch-preview">
-            <h2>What happens after the request?</h2>
+            <h2>What happens after a request?</h2>
             <ol>
-              <li>The customer submits move details and sees a price estimate.</li>
-              <li>You get a ready-to-send email draft with the full request summary.</li>
-              <li>The dispatch board suggests the nearest suitable driver from your driver list.</li>
+              <li>The customer submits moving details and sees an estimate immediately.</li>
+              <li>You receive the request summary and review the closest suitable driver.</li>
+              <li>You connect the driver and customer yourself, keeping the service personal.</li>
             </ol>
           </div>
         </aside>
       </section>
 
       <section class="section section-band">
-        <div class="section-heading narrow">
-          <span class="eyebrow">How it works</span>
-          <h2>Built for residential and apartment moves, not industrial trucking.</h2>
+        <div class="section-heading">
+          <span class="eyebrow">Why it works</span>
+          <h2>Designed for the real messiness of residential moving.</h2>
+          <p>
+            Residential moving jobs are usually small, urgent, and detail-heavy. The site focuses on the information
+            people actually need to share to make the match work.
+          </p>
         </div>
 
-        <div class="steps-grid">
-          <article class="step-card panel">
-            <span class="step-number">01</span>
-            <h3>Customer requests a driver</h3>
-            <p>They enter pickup and drop-off addresses, truck size, move date, and any helpers they need.</p>
+        <div class="comparison-grid">
+          <article class="comparison-card">
+            <span class="pill pill-light">For customers</span>
+            <h3>Less back-and-forth</h3>
+            <p class="support-text">They can request a move, choose vehicle size, and describe access issues without waiting for a call first.</p>
           </article>
-          <article class="step-card panel">
-            <span class="step-number">02</span>
-            <h3>The platform estimates the cost</h3>
-            <p>Pricing is calculated from the selected vehicle size, route distance, and extra move requirements.</p>
+          <article class="comparison-card">
+            <span class="pill pill-light">For drivers</span>
+            <h3>Better-fit jobs</h3>
+            <p class="support-text">Drivers only get connected to moves that match their vehicle size, service areas, and availability profile.</p>
           </article>
-          <article class="step-card panel">
-            <span class="step-number">03</span>
-            <h3>You dispatch the nearest driver</h3>
-            <p>Driver registrations stay in the local database so the dispatch board can suggest the closest match.</p>
+          <article class="comparison-card">
+            <span class="pill pill-light">For your business</span>
+            <h3>Control stays with you</h3>
+            <p class="support-text">You remain the trusted dispatcher, which protects service quality and keeps relationships in your hands.</p>
           </article>
         </div>
       </section>
 
       <section class="section">
         <div class="section-heading">
-          <span class="eyebrow">Site map</span>
-          <h2>Each part of the business now has its own page.</h2>
-          <p>Instead of squeezing everything onto one screen, the website is split into cleaner pages for customers, drivers, and dispatch.</p>
+          <span class="eyebrow">How the product is split</span>
+          <h2>Each page now has a clearer job to do.</h2>
+          <p>The website is structured around the three people in the loop: the customer, the driver, and the operator.</p>
         </div>
 
         <div class="overview-grid">
-          <a class="panel link-card" href="book.html">
-            <span class="pill pill-light">Customer page</span>
+          <a class="link-card" href="book.html">
+            <span class="pill pill-teal">Customer page</span>
             <h3>Book a move</h3>
-            <p>Customers enter where they are moving from and to, choose truck size, and get an estimate.</p>
+            <p>Customers enter pickup and drop-off locations, select truck size, and see the estimate before submitting.</p>
           </a>
-          <a class="panel link-card" href="drivers.html">
-            <span class="pill pill-light">Driver page</span>
+          <a class="link-card" href="drivers.html">
+            <span class="pill pill-teal">Driver page</span>
             <h3>Register drivers</h3>
-            <p>Store driver details, service areas, truck sizes, and vehicle registrations in one place.</p>
+            <p>Capture truck details, contact information, helpers, and service areas so dispatch gets easier over time.</p>
           </a>
-          <a class="panel link-card" href="dispatch.html">
-            <span class="pill pill-light">Operator page</span>
-            <h3>Run dispatch</h3>
-            <p>Review incoming requests, open the email draft, and find the closest suitable driver.</p>
+          <a class="link-card" href="dispatch.html">
+            <span class="pill pill-teal">Operator page</span>
+            <h3>Manage dispatch</h3>
+            <p>Monitor incoming requests, compare available drivers, and send the handoff from one organized screen.</p>
           </a>
         </div>
       </section>
 
       <section class="section">
-        <div class="cta-banner panel">
+        <div class="section-heading">
+          <span class="eyebrow">Ideal use cases</span>
+          <h2>Not industrial freight. Fast everyday moving jobs.</h2>
+        </div>
+
+        <div class="info-grid">
+          <article class="insight-card">
+            <span class="info-chip">Students</span>
+            <h3>Room and res moves</h3>
+            <p class="support-text">Perfect for a bed, desk, boxes, and a few bulky items when someone is changing accommodation.</p>
+          </article>
+          <article class="insight-card">
+            <span class="info-chip">Apartment tenants</span>
+            <h3>Short-notice flat moves</h3>
+            <p class="support-text">Helpful when someone needs stairs, helpers, and access notes included in the request from the start.</p>
+          </article>
+          <article class="insight-card">
+            <span class="info-chip">Furniture buyers</span>
+            <h3>Single-item deliveries</h3>
+            <p class="support-text">Useful for couches, fridges, washing machines, and marketplace pickups that need a small truck quickly.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="home-cta panel">
           <div class="compact-copy">
-            <span class="eyebrow">Start here</span>
-            <h2>Use the booking page to test the customer journey first.</h2>
-            <p>Then add a few sample drivers and open dispatch to see the full middleman workflow working together.</p>
+            <span class="eyebrow">Next best step</span>
+            <h2>Start with the booking page, then test the full dispatch loop.</h2>
+            <p>Submit a sample request, register two or three drivers, and then open dispatch to see how the workflow feels end to end.</p>
           </div>
           <div class="hero-actions">
             <a class="button button-primary" href="book.html">Open booking page</a>
-            <a class="button button-secondary" href="dispatch.html">Open dispatch board</a>
+            <a class="button button-secondary" href="drivers.html">Add driver profiles</a>
           </div>
         </div>
       </section>
     </main>
+
+    <footer class="site-footer">
+      <div class="footer-grid">
+        <div class="footer-column">
+          <div class="footer-topline">
+            <span class="eyebrow">On The Move</span>
+            <span class="pill pill-light">MVP</span>
+          </div>
+          <h3>Residential moving coordination for local bakkies and small trucks.</h3>
+          <p class="micro-copy">The current version is a front-end MVP with local browser storage and operator-led matching.</p>
+        </div>
+        <div class="footer-column">
+          <h4>Explore</h4>
+          <div class="footer-link-list">
+            <a href="book.html">Book a move</a>
+            <a href="drivers.html">Register drivers</a>
+            <a href="dispatch.html">Dispatch board</a>
+          </div>
+        </div>
+        <div class="footer-column">
+          <h4>Workflow</h4>
+          <div class="footer-link-list">
+            <a href="book.html">Customer request</a>
+            <a href="dispatch.html">Operator review</a>
+            <a href="drivers.html">Driver database</a>
+          </div>
+        </div>
+      </div>
+    </footer>
   </div>
 
   <script src="app.js"></script>

@@ -6,7 +6,7 @@
   <title>Book a Move | On The Move</title>
   <meta
     name="description"
-    content="Request a bakkie or small truck, enter your addresses, and get a moving estimate."
+    content="Request a bakkie or small truck, share moving details, and get a clear estimate on On The Move."
   >
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,6 +18,15 @@
 </head>
 <body>
   <div class="page-shell">
+    <div class="utility-bar">
+      <div class="utility-pill-group">
+        <span class="utility-pill">Quick request form</span>
+        <span class="utility-pill">Live estimate logic</span>
+        <span class="utility-pill">Operator review next</span>
+      </div>
+      <span class="micro-copy">This page is designed for the customer-facing experience.</span>
+    </div>
+
     <header class="site-header">
       <a class="brand" href="index.html" aria-label="On The Move home">
         <span class="brand-mark">OTM</span>
@@ -42,24 +51,40 @@
         <div class="page-hero-grid">
           <div class="compact-copy">
             <span class="eyebrow">Customer booking</span>
-            <h1>Request a driver and calculate the moving estimate.</h1>
+            <h1>Tell us about the move, then get the estimate instantly.</h1>
             <p>
-              This page is for the customer journey. Enter the addresses, choose the truck size,
-              and On The Move prepares the request for dispatch.
+              The booking flow collects the details you need without overwhelming the customer. It keeps the process
+              quick, but still gives you enough information to dispatch confidently.
             </p>
+            <div class="signal-row">
+              <div class="page-stat">
+                <span>Step 1</span>
+                <strong>Share the route</strong>
+              </div>
+              <div class="page-stat">
+                <span>Step 2</span>
+                <strong>Choose a vehicle</strong>
+              </div>
+              <div class="page-stat">
+                <span>Step 3</span>
+                <strong>Review estimate</strong>
+              </div>
+            </div>
           </div>
-          <div class="mock-card">
-            <div class="mock-row">
-              <span>Best for</span>
-              <strong>Rooms, flats, student moves, small homes</strong>
+
+          <div class="page-side-stack">
+            <div class="route-card">
+              <h3 class="panel-title">Best suited for</h3>
+              <ul class="micro-list">
+                <li>Apartment or room moves</li>
+                <li>Furniture pickups and deliveries</li>
+                <li>Short city moves needing a bakkie or small truck</li>
+              </ul>
             </div>
-            <div class="mock-row">
-              <span>Vehicles</span>
-              <strong>Bakkies and small trucks only</strong>
-            </div>
-            <div class="mock-row">
-              <span>Dispatch flow</span>
-              <strong>Email draft + nearest driver suggestion</strong>
+            <div class="insight-card">
+              <span class="pill pill-light">What the customer sees</span>
+              <h3>Clarity before a phone call</h3>
+              <p class="support-text">The estimate is shown before the handoff, which makes the experience feel more trustworthy and less chaotic.</p>
             </div>
           </div>
         </div>
@@ -68,101 +93,137 @@
       <section class="section">
         <div class="booking-grid">
           <form class="panel form-panel" id="request-form">
-            <div class="form-title-row">
-              <h3>Request a driver</h3>
-              <span class="pill pill-light">Customer view</span>
+            <div class="form-intro">
+              <div class="form-title-row">
+                <h3>Book a move</h3>
+                <span class="pill pill-light">Customer form</span>
+              </div>
+              <p class="section-kicker">Complete the request in a few clear sections so the operator can match the right driver fast.</p>
             </div>
 
-            <div class="field-grid">
-              <label class="field">
-                <span>Full name</span>
-                <input type="text" name="customerName" placeholder="Customer full name" required>
-              </label>
-              <label class="field">
-                <span>Phone number</span>
-                <input type="tel" name="customerPhone" placeholder="+27..." required>
-              </label>
-              <label class="field">
-                <span>Email address</span>
-                <input type="email" name="customerEmail" placeholder="name@email.com" required>
-              </label>
-              <label class="field">
-                <span>Move date</span>
-                <input type="date" name="moveDate" required>
-              </label>
-              <label class="field field-full">
-                <span>Moving from</span>
-                <input
-                  type="text"
-                  name="fromAddress"
-                  placeholder="Street, suburb, city"
-                  autocomplete="street-address"
-                  required
-                >
-              </label>
-              <label class="field field-full">
-                <span>Moving to</span>
-                <input
-                  type="text"
-                  name="toAddress"
-                  placeholder="Street, suburb, city"
-                  autocomplete="street-address"
-                  required
-                >
-              </label>
-              <label class="field">
-                <span>Truck size</span>
-                <select name="truckSize" required>
-                  <option value="bakkie">Bakkie / half-ton</option>
-                  <option value="one-ton">1-ton truck</option>
-                  <option value="one-point-five-ton">1.5-ton truck</option>
-                  <option value="three-ton">3-ton truck</option>
-                </select>
-              </label>
-              <label class="field">
-                <span>Extra helpers needed</span>
-                <select name="helpers">
-                  <option value="0">No helpers</option>
-                  <option value="1">1 helper</option>
-                  <option value="2">2 helpers</option>
-                  <option value="3">3 helpers</option>
-                </select>
-              </label>
-              <label class="field">
-                <span>Pickup floor</span>
-                <input type="number" name="pickupFloor" min="0" max="25" value="0">
-              </label>
-              <label class="field">
-                <span>Drop-off floor</span>
-                <input type="number" name="dropoffFloor" min="0" max="25" value="0">
-              </label>
-              <label class="field">
-                <span>Backup distance (km)</span>
-                <input type="number" name="manualDistance" min="0" step="0.1" placeholder="Optional">
-              </label>
-              <label class="field">
-                <span>Load size</span>
-                <select name="loadDensity">
-                  <option value="light">Light load</option>
-                  <option value="standard" selected>Standard move</option>
-                  <option value="heavy">Heavy / bulky</option>
-                </select>
-              </label>
-              <label class="field field-full">
-                <span>Special notes</span>
-                <textarea
-                  name="notes"
-                  rows="4"
-                  placeholder="Furniture details, gate code, preferred pickup time, fragile items, or apartment instructions"
-                ></textarea>
-              </label>
+            <div class="form-stack">
+              <section class="form-group">
+                <div class="form-group-title">
+                  <h4>Contact details</h4>
+                  <span class="info-chip">Who is moving?</span>
+                </div>
+                <div class="field-grid">
+                  <label class="field">
+                    <span>Full name</span>
+                    <input type="text" name="customerName" placeholder="Customer full name" required>
+                  </label>
+                  <label class="field">
+                    <span>Phone number</span>
+                    <input type="tel" name="customerPhone" placeholder="+27..." required>
+                  </label>
+                  <label class="field field-full">
+                    <span>Email address</span>
+                    <input type="email" name="customerEmail" placeholder="name@email.com" required>
+                  </label>
+                </div>
+              </section>
+
+              <section class="form-group">
+                <div class="form-group-title">
+                  <h4>Move details</h4>
+                  <span class="info-chip">Where and when?</span>
+                </div>
+                <div class="field-grid">
+                  <label class="field">
+                    <span>Move date</span>
+                    <input type="date" name="moveDate" required>
+                  </label>
+                  <label class="field">
+                    <span>Truck size</span>
+                    <select name="truckSize" required>
+                      <option value="bakkie">Bakkie / half-ton</option>
+                      <option value="one-ton">1-ton truck</option>
+                      <option value="one-point-five-ton">1.5-ton truck</option>
+                      <option value="three-ton">3-ton truck</option>
+                    </select>
+                  </label>
+                  <label class="field field-full">
+                    <span>Moving from</span>
+                    <input
+                      type="text"
+                      name="fromAddress"
+                      placeholder="Street, suburb, city"
+                      autocomplete="street-address"
+                      required
+                    >
+                  </label>
+                  <label class="field field-full">
+                    <span>Moving to</span>
+                    <input
+                      type="text"
+                      name="toAddress"
+                      placeholder="Street, suburb, city"
+                      autocomplete="street-address"
+                      required
+                    >
+                  </label>
+                  <label class="field field-full">
+                    <span>Backup distance (km)</span>
+                    <input type="number" name="manualDistance" min="0" step="0.1" placeholder="Optional if route lookup fails">
+                  </label>
+                </div>
+              </section>
+
+              <section class="form-group">
+                <div class="form-group-title">
+                  <h4>Access and loading</h4>
+                  <span class="info-chip">What support is needed?</span>
+                </div>
+                <div class="field-grid">
+                  <label class="field">
+                    <span>Extra helpers needed</span>
+                    <select name="helpers">
+                      <option value="0">No helpers</option>
+                      <option value="1">1 helper</option>
+                      <option value="2">2 helpers</option>
+                      <option value="3">3 helpers</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>Load size</span>
+                    <select name="loadDensity">
+                      <option value="light">Light load</option>
+                      <option value="standard" selected>Standard move</option>
+                      <option value="heavy">Heavy / bulky</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>Pickup floor</span>
+                    <input type="number" name="pickupFloor" min="0" max="25" value="0">
+                  </label>
+                  <label class="field">
+                    <span>Drop-off floor</span>
+                    <input type="number" name="dropoffFloor" min="0" max="25" value="0">
+                  </label>
+                </div>
+              </section>
+
+              <section class="form-group">
+                <div class="form-group-title">
+                  <h4>Special instructions</h4>
+                  <span class="info-chip">Optional notes</span>
+                </div>
+                <div class="field-grid">
+                  <label class="field field-full">
+                    <span>Notes</span>
+                    <textarea
+                      name="notes"
+                      rows="4"
+                      placeholder="Furniture details, gate code, preferred pickup time, fragile items, or apartment instructions"
+                    ></textarea>
+                  </label>
+                </div>
+              </section>
             </div>
 
             <div class="form-actions">
               <button class="button button-primary" id="request-submit" type="submit">Estimate and request driver</button>
-              <p class="form-note">
-                Route distance is fetched live when possible. If the address lookup fails, the backup distance is used.
-              </p>
+              <p class="form-note">If address lookup fails, the backup distance is used so the customer can still continue.</p>
             </div>
           </form>
 
@@ -214,9 +275,12 @@
             </ul>
 
             <div class="quote-note">
-              <p id="quote-message">
-                Submit a move request to calculate the estimate and suggest the nearest matching driver.
-              </p>
+              <p id="quote-message">Submit a move request to calculate the estimate and suggest the nearest matching driver.</p>
+            </div>
+
+            <div class="operator-tip">
+              <strong class="panel-title">Operator handoff</strong>
+              <p class="panel-note">Once the request is saved, an email draft is prepared so the operator can pick the best nearby driver manually.</p>
             </div>
 
             <div class="request-result" id="request-result" hidden>
@@ -231,6 +295,30 @@
         </div>
       </section>
     </main>
+
+    <footer class="site-footer">
+      <div class="footer-grid">
+        <div class="footer-column">
+          <span class="eyebrow">Booking flow</span>
+          <h3>Made to feel faster and calmer for the customer.</h3>
+          <p class="micro-copy">The form now groups details into contact, move, access, and notes so it is easier to complete without confusion.</p>
+        </div>
+        <div class="footer-column">
+          <h4>Next page</h4>
+          <div class="footer-link-list">
+            <a href="dispatch.html">Open dispatch board</a>
+            <a href="drivers.html">Register more drivers</a>
+          </div>
+        </div>
+        <div class="footer-column">
+          <h4>Related</h4>
+          <div class="footer-link-list">
+            <a href="index.html">Back to home</a>
+            <a href="drivers.html">Driver onboarding</a>
+          </div>
+        </div>
+      </div>
+    </footer>
   </div>
 
   <script src="app.js"></script>

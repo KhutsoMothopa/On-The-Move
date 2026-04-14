@@ -18,6 +18,15 @@
 </head>
 <body>
   <div class="page-shell">
+    <div class="utility-bar">
+      <div class="utility-pill-group">
+        <span class="utility-pill">Operator dashboard</span>
+        <span class="utility-pill">Request + driver view</span>
+        <span class="utility-pill">Email handoff</span>
+      </div>
+      <span class="micro-copy">This page is the control room for the middleman workflow.</span>
+    </div>
+
     <header class="site-header">
       <a class="brand" href="index.html" aria-label="On The Move home">
         <span class="brand-mark">OTM</span>
@@ -42,24 +51,40 @@
         <div class="page-hero-grid">
           <div class="compact-copy">
             <span class="eyebrow">Dispatch board</span>
-            <h1>Manage requests, driver matches, and the operator handoff.</h1>
+            <h1>Review the request, choose the driver, and keep the handoff personal.</h1>
             <p>
-              This is the middleman control page. Review all incoming requests, keep the operator email current,
-              and decide which driver should be connected to the customer.
+              The operator flow is where the business value sits. Instead of an automatic assignment,
+              this page helps you see the incoming request clearly and decide who should take the job.
             </p>
+            <div class="signal-row">
+              <div class="page-stat">
+                <span>Review</span>
+                <strong>New requests</strong>
+              </div>
+              <div class="page-stat">
+                <span>Compare</span>
+                <strong>Driver pool</strong>
+              </div>
+              <div class="page-stat">
+                <span>Handoff</span>
+                <strong>Email + contact</strong>
+              </div>
+            </div>
           </div>
-          <div class="mock-card">
-            <div class="mock-row">
-              <span>Primary action</span>
-              <strong>Match customer to nearest suitable driver</strong>
+
+          <div class="page-side-stack">
+            <div class="route-card">
+              <h3 class="panel-title">What the operator needs</h3>
+              <ul class="micro-list">
+                <li>A complete request summary</li>
+                <li>Nearby drivers with the right vehicle size</li>
+                <li>A fast way to send the next handoff message</li>
+              </ul>
             </div>
-            <div class="mock-row">
-              <span>Email handoff</span>
-              <strong>Ready-to-send draft for each request</strong>
-            </div>
-            <div class="mock-row">
-              <span>Current stage</span>
-              <strong>Payments handled later</strong>
+            <div class="insight-card">
+              <span class="pill pill-light">Current product stage</span>
+              <h3>Human-led dispatch is the feature</h3>
+              <p class="support-text">The interface is designed to support your judgment, not replace it.</p>
             </div>
           </div>
         </div>
@@ -68,9 +93,12 @@
       <section class="section">
         <div class="dispatch-grid">
           <aside class="panel settings-panel">
-            <div class="form-title-row">
-              <h3>Operator settings</h3>
-              <span class="pill pill-light">MVP email flow</span>
+            <div class="form-intro">
+              <div class="form-title-row">
+                <h3>Operator settings</h3>
+                <span class="pill pill-light">Email handoff</span>
+              </div>
+              <p class="section-kicker">Keep the dispatch email current so every new request is ready for a handoff draft.</p>
             </div>
 
             <label class="field">
@@ -78,9 +106,10 @@
               <input id="operator-email" type="email" placeholder="dispatch@onthemove.co.za">
             </label>
 
-            <p class="form-note">
-              New move requests create a ready-to-send email draft for this address. For production, swap this with a real email API.
-            </p>
+            <div class="operator-tip">
+              <strong class="panel-title">How this works now</strong>
+              <p class="panel-note">Every submitted request creates a ready-to-send email draft. Later, this can be upgraded to a real email service.</p>
+            </div>
 
             <div class="stats-grid">
               <article class="stat-card">
@@ -118,6 +147,30 @@
         </div>
       </section>
     </main>
+
+    <footer class="site-footer">
+      <div class="footer-grid">
+        <div class="footer-column">
+          <span class="eyebrow">Dispatch flow</span>
+          <h3>The operator page is now easier to scan and compare.</h3>
+          <p class="micro-copy">The goal is to help you understand the request quickly and move straight into a confident driver handoff.</p>
+        </div>
+        <div class="footer-column">
+          <h4>Next page</h4>
+          <div class="footer-link-list">
+            <a href="book.html">Create a test booking</a>
+            <a href="drivers.html">Add more drivers</a>
+          </div>
+        </div>
+        <div class="footer-column">
+          <h4>Related</h4>
+          <div class="footer-link-list">
+            <a href="index.html">Back to home</a>
+            <a href="drivers.html">Driver onboarding</a>
+          </div>
+        </div>
+      </div>
+    </footer>
   </div>
 
   <script src="app.js"></script>
