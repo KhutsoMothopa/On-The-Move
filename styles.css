@@ -813,6 +813,14 @@ button {
   grid-column: 1 / -1;
 }
 
+.autocomplete-field {
+  position: relative;
+}
+
+.autocomplete-shell {
+  position: relative;
+}
+
 .field input,
 .field select,
 .field textarea {
@@ -840,6 +848,66 @@ button {
 
 .field textarea {
   resize: vertical;
+}
+
+.autocomplete-helper {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.autocomplete-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 20;
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 251, 246, 0.98);
+  border: 1px solid rgba(24, 35, 31, 0.1);
+  box-shadow: 0 22px 44px rgba(35, 24, 17, 0.14);
+}
+
+.autocomplete-item {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--ink);
+  text-align: left;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item:focus-visible,
+.autocomplete-item.is-active {
+  background: rgba(10, 126, 119, 0.1);
+  outline: none;
+}
+
+.autocomplete-item strong {
+  font-size: 0.95rem;
+}
+
+.autocomplete-item span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.google-attribution {
+  margin: 6px 0 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #6c6f73;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .form-actions {

@@ -142,25 +142,43 @@
                       <option value="three-ton">3-ton truck</option>
                     </select>
                   </label>
-                  <label class="field field-full">
+                  <label class="field field-full autocomplete-field">
                     <span>Moving from</span>
-                    <input
-                      type="text"
-                      name="fromAddress"
-                      placeholder="Street, suburb, city"
-                      autocomplete="street-address"
-                      required
-                    >
+                    <div class="autocomplete-shell">
+                      <input
+                        type="text"
+                        name="fromAddress"
+                        placeholder="Street, suburb, city"
+                        autocomplete="off"
+                        required
+                        aria-autocomplete="list"
+                        aria-controls="from-suggestions"
+                      >
+                      <input type="hidden" name="fromPlaceId">
+                      <div class="autocomplete-list" id="from-suggestions" role="listbox" hidden></div>
+                    </div>
+                    <small class="autocomplete-helper" id="from-address-helper">
+                      Choose a suggested address for the most accurate route estimate.
+                    </small>
                   </label>
-                  <label class="field field-full">
+                  <label class="field field-full autocomplete-field">
                     <span>Moving to</span>
-                    <input
-                      type="text"
-                      name="toAddress"
-                      placeholder="Street, suburb, city"
-                      autocomplete="street-address"
-                      required
-                    >
+                    <div class="autocomplete-shell">
+                      <input
+                        type="text"
+                        name="toAddress"
+                        placeholder="Street, suburb, city"
+                        autocomplete="off"
+                        required
+                        aria-autocomplete="list"
+                        aria-controls="to-suggestions"
+                      >
+                      <input type="hidden" name="toPlaceId">
+                      <div class="autocomplete-list" id="to-suggestions" role="listbox" hidden></div>
+                    </div>
+                    <small class="autocomplete-helper" id="to-address-helper">
+                      Search works best when you pick a full Google suggestion instead of free-typing.
+                    </small>
                   </label>
                   <label class="field field-full">
                     <span>Backup distance (km)</span>
@@ -225,6 +243,8 @@
               <button class="button button-primary" id="request-submit" type="submit">Estimate and request driver</button>
               <p class="form-note">If address lookup fails, the backup distance is used so the customer can still continue.</p>
             </div>
+
+            <p class="google-attribution">Powered by Google</p>
           </form>
 
           <aside class="panel quote-panel">

@@ -21,6 +21,13 @@ const DEFAULT_SETTINGS = {
   operatorEmail: "dispatch@onthemove.co.za",
 };
 
+const GOOGLE_ENDPOINTS = {
+  autocomplete: "/api/google-places-autocomplete",
+  route: "/api/google-route",
+};
+
+const AUTOCOMPLETE_MIN_CHARS = 3;
+
 const ui = {
   requestForm: document.querySelector("#request-form"),
   driverForm: document.querySelector("#driver-form"),
@@ -53,9 +60,24 @@ const ui = {
     requests: document.querySelector("#requests-list"),
     drivers: document.querySelector("#drivers-list"),
   },
+  addressFields: {
+    from: {
+      input: document.querySelector('input[name="fromAddress"]'),
+      placeId: document.querySelector('input[name="fromPlaceId"]'),
+      list: document.querySelector("#from-suggestions"),
+      helper: document.querySelector("#from-address-helper"),
+    },
+    to: {
+      input: document.querySelector('input[name="toAddress"]'),
+      placeId: document.querySelector('input[name="toPlaceId"]'),
+      list: document.querySelector("#to-suggestions"),
+      helper: document.querySelector("#to-address-helper"),
+    },
+  },
 };
 
 let lastSummary = "";
+let googleAutocompleteEnabled = true;
 
 init();
 
@@ -72,6 +94,8 @@ function init() {
     if (ui.requestForm.elements.moveDate) {
       ui.requestForm.elements.moveDate.value = todayIsoDate();
     }
+    setupAddressAutocomplete("from", ui.addressFields.from);
+    setupAddressAutocomplete("to", ui.addressFields.to);
   }
 
   if (ui.driverForm) {
@@ -103,6 +127,8 @@ async function handleRequestSubmit(event) {
     moveDate: formData.get("moveDate"),
     fromAddress: formData.get("fromAddress").trim(),
     toAddress: formData.get("toAddress").trim(),
+    fromPlaceId: String(formData.get("fromPlaceId") || "").trim(),
+    toPlaceId: String(formData.get("toPlaceId") || "").trim(),
     truckSize: formData.get("truckSize"),
     helpers: Number(formData.get("helpers") || 0),
     pickupFloor: Number(formData.get("pickupFloor") || 0),
@@ -115,7 +141,7 @@ async function handleRequestSubmit(event) {
   setRequestLoadingState(true);
 
   try {
-    const route = await resolveDistance(payload.fromAddress, payload.toAddress, payload.manualDistance);
+    const route = await resolveDistance(payload);
     const estimate = calculateEstimate(payload, route.distanceKm);
     const drivers = loadStorage(STORAGE_KEYS.drivers, []);
     const suggestedDriver = findClosestDriver(drivers, payload, route);
@@ -153,6 +179,8 @@ async function handleRequestSubmit(event) {
 
     renderDashboard();
     ui.requestForm.reset();
+    resetAddressAutocompleteField(ui.addressFields.from);
+    resetAddressAutocompleteField(ui.addressFields.to);
 
     if (ui.requestForm.elements.moveDate) {
       ui.requestForm.elements.moveDate.value = todayIsoDate();
@@ -218,6 +246,202 @@ function setRequestLoadingState(isLoading) {
   }
 }
 
+function setupAddressAutocomplete(fieldKey, fieldUi) {
+  if (!fieldUi.input || !fieldUi.placeId || !fieldUi.list) {
+    return;
+  }
+
+  let debounceTimer = null;
+  let suggestions = [];
+  let activeIndex = -1;
+
+  fieldUi.input.addEventListener("input", () => {
+    fieldUi.placeId.value = "";
+    activeIndex = -1;
+
+    if (!googleAutocompleteEnabled) {
+      updateAutocompleteHelper(fieldUi, "Google suggestions are unavailable right now. You can still type the address manually.");
+      hideSuggestionList(fieldUi.list);
+      return;
+    }
+
+    const query = fieldUi.input.value.trim();
+
+    if (debounceTimer) {
+      window.clearTimeout(debounceTimer);
+    }
+
+    if (query.length < AUTOCOMPLETE_MIN_CHARS) {
+      suggestions = [];
+      hideSuggestionList(fieldUi.list);
+      updateAutocompleteHelper(fieldUi, "Choose a suggested address for the most accurate route estimate.");
+      return;
+    }
+
+    updateAutocompleteHelper(fieldUi, "Searching Google address suggestions...");
+
+    debounceTimer = window.setTimeout(async () => {
+      try {
+        suggestions = await fetchAddressSuggestions(query);
+        activeIndex = -1;
+        renderSuggestionList(fieldKey, fieldUi, suggestions, activeIndex);
+
+        if (!suggestions.length) {
+          updateAutocompleteHelper(fieldUi, "No Google suggestions found yet. Keep typing or enter the address manually.");
+        } else {
+          updateAutocompleteHelper(fieldUi, "Select a Google suggestion to improve distance accuracy.");
+        }
+      } catch (error) {
+        googleAutocompleteEnabled = false;
+        suggestions = [];
+        hideSuggestionList(fieldUi.list);
+        updateAutocompleteHelper(fieldUi, "Google suggestions are unavailable right now. You can still type the address manually.");
+      }
+    }, 240);
+  });
+
+  fieldUi.input.addEventListener("keydown", (event) => {
+    if (!suggestions.length || fieldUi.list.hidden) {
+      return;
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      activeIndex = Math.min(activeIndex + 1, suggestions.length - 1);
+      renderSuggestionList(fieldKey, fieldUi, suggestions, activeIndex);
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      activeIndex = Math.max(activeIndex - 1, 0);
+      renderSuggestionList(fieldKey, fieldUi, suggestions, activeIndex);
+      return;
+    }
+
+    if (event.key === "Enter" && activeIndex >= 0) {
+      event.preventDefault();
+      selectAddressSuggestion(fieldUi, suggestions[activeIndex]);
+      suggestions = [];
+      return;
+    }
+
+    if (event.key === "Escape") {
+      hideSuggestionList(fieldUi.list);
+    }
+  });
+
+  fieldUi.input.addEventListener("blur", () => {
+    window.setTimeout(() => hideSuggestionList(fieldUi.list), 120);
+  });
+}
+
+async function fetchAddressSuggestions(query) {
+  const endpoint = new URL(GOOGLE_ENDPOINTS.autocomplete, window.location.origin);
+  endpoint.searchParams.set("q", query);
+
+  const response = await fetch(endpoint.toString(), {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  const payload = await response.json();
+
+  if (response.status === 503) {
+    throw new Error(payload.error || "Google autocomplete unavailable.");
+  }
+
+  if (!response.ok) {
+    throw new Error(payload.error || "Could not load address suggestions.");
+  }
+
+  return payload.suggestions || [];
+}
+
+function renderSuggestionList(fieldKey, fieldUi, suggestions, activeIndex) {
+  if (!suggestions.length) {
+    hideSuggestionList(fieldUi.list);
+    return;
+  }
+
+  fieldUi.list.innerHTML = suggestions
+    .map((suggestion, index) => {
+      const isActive = index === activeIndex ? " is-active" : "";
+      const label = suggestion.secondaryText
+        ? `${suggestion.mainText} - ${suggestion.secondaryText}`
+        : suggestion.text;
+
+      return `
+        <button
+          class="autocomplete-item${isActive}"
+          data-field="${escapeHtml(fieldKey)}"
+          data-place-id="${escapeHtml(suggestion.placeId)}"
+          data-address="${escapeHtml(suggestion.text)}"
+          data-main-text="${escapeHtml(suggestion.mainText)}"
+          data-secondary-text="${escapeHtml(suggestion.secondaryText || "")}"
+          type="button"
+          role="option"
+          aria-selected="${index === activeIndex ? "true" : "false"}"
+        >
+          <strong>${escapeHtml(suggestion.mainText || suggestion.text)}</strong>
+          <span>${escapeHtml(suggestion.secondaryText || label)}</span>
+        </button>
+      `;
+    })
+    .join("");
+
+  fieldUi.list.hidden = false;
+
+  fieldUi.list.querySelectorAll(".autocomplete-item").forEach((button) => {
+    button.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+      selectAddressSuggestion(fieldUi, {
+        placeId: button.dataset.placeId,
+        text: button.dataset.address,
+        mainText: button.dataset.mainText,
+        secondaryText: button.dataset.secondaryText,
+      });
+    });
+  });
+}
+
+function selectAddressSuggestion(fieldUi, suggestion) {
+  fieldUi.input.value = suggestion.text;
+  fieldUi.placeId.value = suggestion.placeId;
+  hideSuggestionList(fieldUi.list);
+  updateAutocompleteHelper(fieldUi, `Selected Google address: ${suggestion.mainText || suggestion.text}`);
+}
+
+function resetAddressAutocompleteField(fieldUi) {
+  if (!fieldUi.input || !fieldUi.placeId) {
+    return;
+  }
+
+  fieldUi.placeId.value = "";
+  hideSuggestionList(fieldUi.list);
+
+  if (fieldUi.helper) {
+    fieldUi.helper.textContent = "Choose a suggested address for the most accurate route estimate.";
+  }
+}
+
+function updateAutocompleteHelper(fieldUi, message) {
+  if (fieldUi.helper) {
+    fieldUi.helper.textContent = message;
+  }
+}
+
+function hideSuggestionList(listElement) {
+  if (!listElement) {
+    return;
+  }
+
+  listElement.hidden = true;
+  listElement.innerHTML = "";
+}
+
 function calculateEstimate(payload, distanceKm) {
   const truck = TRUCK_TYPES[payload.truckSize];
   const loadProfile = LOAD_DENSITY[payload.loadDensity];
@@ -252,6 +476,7 @@ function renderQuote(estimate, route, payload, suggestedDriver) {
   }
 
   const routeSourceLabel = {
+    google: "Google driving route",
     route: "Live road route",
     aerial: "Fallback aerial estimate",
     manual: "Manual backup distance",
@@ -259,7 +484,9 @@ function renderQuote(estimate, route, payload, suggestedDriver) {
 
   ui.quote.title.textContent = "Estimated move total";
   ui.quote.total.textContent = formatCurrency(estimate.total);
-  ui.quote.distance.textContent = `${route.distanceKm.toFixed(1)} km - ${routeSourceLabel}`;
+  ui.quote.distance.textContent = route.durationMinutes
+    ? `${route.distanceKm.toFixed(1)} km - ${routeSourceLabel} - ${route.durationMinutes} min`
+    : `${route.distanceKm.toFixed(1)} km - ${routeSourceLabel}`;
   ui.quote.truck.textContent = TRUCK_TYPES[payload.truckSize].label;
   ui.quote.base.textContent = formatCurrency(estimate.base);
   ui.quote.distanceCharge.textContent = formatCurrency(estimate.distanceCharge);
@@ -389,7 +616,26 @@ function renderDriverList(drivers) {
     .join("");
 }
 
-async function resolveDistance(fromAddress, toAddress, manualDistance) {
+async function resolveDistance(payload) {
+  const {
+    fromAddress,
+    toAddress,
+    fromPlaceId,
+    toPlaceId,
+    manualDistance,
+  } = payload;
+
+  try {
+    return await fetchGoogleRoute({
+      fromAddress,
+      toAddress,
+      fromPlaceId,
+      toPlaceId,
+    });
+  } catch (error) {
+    // Fall through to the existing open-data/manual fallback so the page stays usable.
+  }
+
   try {
     const [fromLocation, toLocation] = await Promise.all([
       geocodeAddress(fromAddress),
@@ -423,6 +669,41 @@ async function resolveDistance(fromAddress, toAddress, manualDistance) {
 
     throw new Error("We could not read the pickup and drop-off addresses. Add an approximate backup distance in kilometres and try again.");
   }
+}
+
+async function fetchGoogleRoute({ fromAddress, toAddress, fromPlaceId, toPlaceId }) {
+  if (!fromAddress || !toAddress) {
+    throw new Error("Origin and destination are required.");
+  }
+
+  const response = await fetch(GOOGLE_ENDPOINTS.route, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      originPlaceId: fromPlaceId || "",
+      destinationPlaceId: toPlaceId || "",
+      originAddress: fromAddress,
+      destinationAddress: toAddress,
+    }),
+  });
+
+  const payload = await response.json();
+
+  if (!response.ok) {
+    throw new Error(payload.error || "Google route lookup failed.");
+  }
+
+  return {
+    source: "google",
+    distanceKm: payload.distanceKm,
+    durationMinutes: payload.durationMinutes,
+    staticDurationMinutes: payload.staticDurationMinutes,
+    fromLocation: payload.fromLocation,
+    toLocation: payload.toLocation,
+  };
 }
 
 async function geocodeAddress(query) {
@@ -527,6 +808,7 @@ function canHandleRequest(driverTruckSize, requestedTruckSize) {
 
 function createRequestSummary(requestRecord, suggestedDriver) {
   const routeSource = {
+    google: "Google driving route",
     route: "live route",
     aerial: "aerial fallback",
     manual: "manual backup",
